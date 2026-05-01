@@ -1,0 +1,71 @@
+body {
+  background: #f6f7f9;
+}
+
+/* HERO */
+.contact-hero {
+  background: linear-gradient(135deg, #f8f9fb, #ececec);
+    padding: 70px 20px 40px; 
+}
+
+.contact-hero h1 {
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.contact-hero p {
+  color: #666;
+}
+
+/* CARD */
+.contact-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid #eee;
+  text-align: center;
+    height: 100%;
+  transition: 0.3s;
+}
+
+.contact-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+}
+
+/* FORM */
+.contact-form {
+  background: #fff;
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid #eee;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    height: 100%;
+}
+section {
+  margin-bottom: 60px;
+}
+iframe {
+  height: 100%;
+  min-height: 400px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-color: #111;
+  box-shadow: none;
+}
+
+.container .row {
+  background: #fff;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}

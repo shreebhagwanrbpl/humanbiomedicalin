@@ -1,0 +1,171 @@
+.navbar {
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 999;
+  transition: 0.4s ease;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  backdrop-filter: blur(10px);
+}
+
+/* SCROLL PE DARK */
+.navbar.scrolled {
+  background: #0b0b0b;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+/* CONTAINER */
+.nav-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 18px 30px;
+  display: grid;
+  align-items: center;
+  justify-content: space-between;
+    grid-template-columns: 1fr auto 1fr;
+}
+
+/* LOGO */
+.logo-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 18px;
+  animation: fadeIn 0.8s ease;
+   justify-self: start;
+}
+
+/* DEFAULT TEXT (TOP) */
+.logo-box span {
+  color: #111;
+}
+
+/* SCROLL TEXT */
+.navbar.scrolled .logo-box span {
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* LINKS */
+.nav-links {
+  justify-self: center;
+  display: flex;
+  gap: 30px;
+}
+
+.nav-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 170px;
+}
+
+/* DEFAULT LINKS (BLACK) */
+.nav-links a {
+  color: #111;
+  text-decoration: none;
+  position: relative;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+/* SCROLL LINKS (WHITE) */
+.navbar.scrolled .nav-links a {
+  color: #fff;
+}
+
+/* ACTIVE LINK */
+.nav-links a.active {
+  font-weight: 600;
+}
+
+/* UNDERLINE EFFECT */
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  width: 0%;
+  height: 2px;
+  background: currentColor;
+  left: 0;
+  bottom: -5px;
+  transition: 0.3s;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+/* BUTTON */
+.nav-btn {
+  background: #111;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 30px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+/* SCROLL BUTTON */
+.navbar.scrolled .nav-btn {
+  background: #fff;
+  color: #111;
+}
+
+/* HAMBURGER */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.hamburger span {
+  width: 25px;
+  height: 3px;
+  background: #111;
+  transition: 0.3s;
+}
+
+/* SCROLL HAMBURGER */
+.navbar.scrolled .hamburger span {
+  background: #fff;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .nav-links {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 25px;
+    transform: translateY(-200%);
+    transition: 0.4s;
+  }
+
+  .nav-links.active {
+    transform: translateY(0);
+  }
+
+  .nav-btn {
+    display: none;
+  }
+
+
+  .hamburger {
+    display: flex;
+  }
+}
+
