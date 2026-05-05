@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import "@/app/components/pages.css"
 import Link from "next/link";
+import "./Navbar.css"
 
 export default function Navbar() {
 
