@@ -391,7 +391,9 @@ footer a:hover {
   background: #ffffff;
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
-  height:200px;
+  /* height:200px; */
+    padding: 80px 0;
+  height: auto;
 }
 
 /* BOX */
@@ -434,6 +436,10 @@ footer a:hover {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+        .icon {
+          font-size: 40px;
+          margin-bottom: 15px;
+        }
 
 /* TEXT */
 .stat-box p {
@@ -478,12 +484,22 @@ footer a:hover {
   font-size: 40px;
   margin-bottom: 15px;
 }
+.product-content{
+  padding: 24px;
+  text-align: center;
+}
 
+.product-content p{
+  margin-bottom: 20px;
+}
 /* TEXT */
+
 .service-card p {
   color: #666;
 }
-
+.service-card H5 {
+  color: #666;
+}
 /* SECTION */
 .products-section {
   background: #f6f6f4;
@@ -506,9 +522,22 @@ footer a:hover {
 }
 
 /* IMAGE */
-.product-img {
-  height: 200px;
+/* IMAGE WRAPPER */
+.product-img-wrapper {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+  padding: 20px;
+}
+
+/* IMAGE */
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: 0.4s;
 }
 
 .product-img img {
@@ -558,7 +587,8 @@ footer a:hover {
 }
 
 .product-btn-main:hover {
-  background: #dcdad4;
+  background: #333;
+  color: #ffffff;
 }
 
 /* SECTION */
@@ -615,48 +645,78 @@ footer a:hover {
 /* CTA SECTION */
 .cta-section {
   background: linear-gradient(135deg, #f3f2ef, #e9e7e2);
-  padding: 80px 0;
-  border-radius: 20px;
-  margin: 60px 20px;
+  padding: 90px 20px;
+  border-radius: 30px;
+  margin: 80px 20px;
+  position: relative;
+  overflow: hidden;
 }
 
 /* TITLE */
 .cta-title {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: 700;
   color: #111;
+  margin-bottom: 18px;
+  line-height: 1.2;
 }
 
 /* DESC */
 .cta-desc {
   color: #666;
-  font-size: 16px;
+  font-size: 17px;
+  line-height: 1.7;
+  max-width: 720px;
+  margin: auto;
 }
 
-/* BUTTON PRIMARY */
-.cta-btn {
-  background: #dcdad4;
-  color: #333;
-  border-radius: 30px;
-  padding: 10px 25px;
-  border: none;
-  transition: 0.3s;
+/* BUTTON WRAPPER */
+.cta-btn-wrap{
+  margin-top: 35px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  flex-wrap:wrap;
 }
 
-.cta-btn:hover {
-  background: #cfcac2;
+/* CTA BUTTONS */
+.cta-btn,
+.cta-btn-outline{
+  min-width: 180px;
+  padding: 14px 34px !important;
+  border-radius: 50px !important;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  cursor:pointer;
 }
 
-/* BUTTON OUTLINE */
-.cta-btn-outline {
-  border: 1px solid #ccc;
-  color: #333;
-  border-radius: 30px;
-  padding: 10px 25px;
+/* PRIMARY BUTTON */
+.cta-btn{
+  background: #111 !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
 }
 
-.cta-btn-outline:hover {
-  background: #eee;
+.cta-btn:hover{
+  background:#333 !important;
+  color:#fff !important;
+  transform:translateY(-3px);
+}
+
+/* OUTLINE BUTTON */
+.cta-btn-outline{
+  background: transparent !important;
+  border: 1.5px solid #111 !important;
+  color:#111 !important;
+}
+
+.cta-btn-outline:hover{
+  background:#111 !important;
+  color:#fff !important;
+  transform:translateY(-3px);
 }
 
 
@@ -750,3 +810,12 @@ footer a:hover {
   background: #d6d3cb;
 }
 
+        .hero-section{
+          height: 60vh;
+        }
+
+
+        .fade-up{
+          opacity: 1 !important;
+          transform: translateY(0) !important;
+        }

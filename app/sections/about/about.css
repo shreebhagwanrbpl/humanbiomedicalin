@@ -8,7 +8,7 @@
   background: linear-gradient(135deg, #ffffff, #f3f3f3);
   position: relative;
   overflow: hidden;
-  
+  height: 60vh;
 }
 
 .about-hero::before {

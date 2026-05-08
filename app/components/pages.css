@@ -78,7 +78,7 @@
 
 /* SCROLL LINKS (WHITE) */
 .navbar.scrolled .nav-links a {
-  color: #fff;
+  color: #111;
 }
 
 /* ACTIVE LINK */
@@ -115,8 +115,8 @@
 
 /* SCROLL BUTTON */
 .navbar.scrolled .nav-btn {
-  background: #fff;
-  color: #111;
+  background: #111;
+  color: #fff;
 }
 
 /* HAMBURGER */

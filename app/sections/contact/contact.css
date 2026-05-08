@@ -6,6 +6,7 @@ body {
 .contact-hero {
   background: linear-gradient(135deg, #f8f9fb, #ececec);
     padding: 70px 20px 40px; 
+    height: 60vh;
 }
 
 .contact-hero h1 {
