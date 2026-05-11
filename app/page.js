@@ -10,10 +10,29 @@ import Link from "next/link";
 import Image from "next/image";
 import "./globals.css";
 
-export default function Home() {
+export default function Home({ city }) {
 
   const pathname = usePathname();
+  // current city
+const currentCity = city || "jaipur";
 
+// format city
+const formatCity = (name = "") =>
+  name
+    .split("-")
+    .map(
+      (w) =>
+        w.charAt(0).toUpperCase() +
+        w.slice(1)
+    )
+    .join(" ");
+
+const citySlug = currentCity
+  ?.toLowerCase()
+  ?.replace(/\s+/g, "-");
+
+const cityName =
+  formatCity(currentCity);
   const [mounted, setMounted] = useState(false);
 
   const [counts, setCounts] = useState([0, 0, 0, 0]);
@@ -207,22 +226,27 @@ export default function Home() {
         <div className="container">
 
           <h1 className="hero-title">
-            {data.title}
+         {data.title}
+{" "}
+{cityName && `in ${cityName}`}
           </h1>
 
           <p className="hero-desc mt-3">
-            {data.description}
+      {data.description}
+{" "}
+{cityName &&
+  `available in ${cityName}`}
           </p>
 
           <div className="mt-4 d-flex justify-content-center gap-3 flex-wrap">
 
-            <Link href="/products">
+        <Link href={`/${citySlug}/products`}>
               <button className="btn btn-dark px-4">
                 {data.button1Text}
               </button>
             </Link>
 
-            <Link href="/get-in-touch">
+           <Link href={`/${citySlug}/get-in-touch`}>
               <button className="btn btn-outline-dark px-4">
                 {data.button2Text}
               </button>
@@ -361,7 +385,7 @@ export default function Home() {
                       {item.desc?.slice(0, 50)}...
                     </p>
 
-                    <Link href="/products">
+              <Link href={`/${citySlug}/products`}>
 
                       <button className="btn product-btn w-100 view-btn">
                         View Details
@@ -472,7 +496,7 @@ export default function Home() {
             {/* <button className="btn cta-btn">
               Get Quote
             </button> */}
-<Link href="/get-in-touch">
+<Link href={`/${citySlug}/get-in-touch`}>
             <button className="btn cta-btn-outline">
               Contact Us
             </button>

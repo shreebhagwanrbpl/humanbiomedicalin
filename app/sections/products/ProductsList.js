@@ -5,7 +5,7 @@ import "../products/product.css";
 import { doc, getDoc, addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Modal from "react-modal";
-export default function ProductsList() {
+export default function ProductsList({ city }) {
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
   const [activeImg, setActiveImg] = useState("");
@@ -18,6 +18,26 @@ const [queryForm, setQueryForm] = useState({
   email: "",
   phone: "",
 });
+// current city
+const currentCity = city || "jaipur";
+
+// format city
+const formatCity = (name = "") =>
+  name
+    .split("-")
+    .map(
+      (w) =>
+        w.charAt(0).toUpperCase() +
+        w.slice(1)
+    )
+    .join(" ");
+
+const citySlug = currentCity
+  ?.toLowerCase()
+  ?.replace(/\s+/g, "-");
+
+const cityName =
+  formatCity(currentCity);
 useEffect(() => {
   Modal.setAppElement("body");
 }, []);
@@ -92,12 +112,13 @@ const handleSubmitQuery = async () => {
         "humanbiomedicalin",
         "productQueries"
       ),
-      {
-        productName: selected.title || "",
-        email,
-        phone,
-        createdAt: new Date(),
-      }
+{
+  city: cityName,
+  productName: selected.title || "",
+  email,
+  phone,
+  createdAt: new Date(),
+}
     );
 
     alert("Query submitted");
@@ -121,12 +142,14 @@ const handleSubmitQuery = async () => {
       <section className="product-hero">
         <div className="container text-center hero-inner">
           <h1 className="hero-title">
-            Our <span>Products</span>
+           Our <span>Products</span>
+{cityName && ` in ${cityName}`}
           </h1>
 
           <p className="hero-subtitle">
-            High-quality medical products engineered for accuracy,
-            reliability, and exceptional performance.
+       High-quality medical products engineered for accuracy,
+reliability, and exceptional performance
+{cityName && ` in ${cityName}`}.
           </p>
         </div>
       </section>
@@ -136,7 +159,7 @@ const handleSubmitQuery = async () => {
         {/* SEARCH */}
         <input
           className="form-control mb-4"
-          placeholder="Search product..."
+        placeholder={`Search product in ${cityName}...`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

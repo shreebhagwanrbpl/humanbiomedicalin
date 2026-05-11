@@ -1,58 +1,199 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 export default function Footer() {
+
+  const pathname = usePathname();
+
+  const pathParts = pathname
+    .split("/")
+    .filter(Boolean);
+
+  const reservedRoutes = [
+    "about",
+    "contact",
+    "items",
+    "products",
+    "services",
+  ];
+
+  // district slug
+  const district =
+    pathParts[0] &&
+    !reservedRoutes.includes(pathParts[0])
+      ? pathParts[0]
+      : "jaipur";
+
+  // format city
+  const formatCity = (name = "") =>
+    name
+      .split("-")
+      .map(
+        (w) =>
+          w.charAt(0).toUpperCase() + w.slice(1)
+      )
+      .join(" ");
+
+  const citySlug = district;
+
+  const city = formatCity(citySlug);
+
+  // dynamic links
+  const makeLink = (path = "") => {
+
+    if (!path) {
+      return `/${citySlug}`;
+    }
+
+    return `/${citySlug}${path}`;
+  };
+
   return (
-   <footer className="text-white pt-5 pb-3">
-  <div className="container">
+    <footer className="text-white pt-5 pb-3">
 
-    <div className="row">
-      <div className="col-md-3 mb-4">
-        <h5 className="text-black">Raj Biosis</h5>
-        <p className="text-secondary small">
-          Providing high-quality medical equipment & diagnostic solutions
-          with reliability and trust.
-        </p>
+      <div className="container">
+
+        <div className="row">
+
+          {/* COMPANY */}
+          <div className="col-md-3 mb-4">
+
+            <h5 className="text-black">
+              Raj Biosis
+            </h5>
+
+            <p className="text-secondary small">
+              Providing high-quality medical equipment
+              & diagnostic solutions with reliability
+              and trust.
+            </p>
+
+          </div>
+
+          {/* QUICK LINKS */}
+          <div className="col-md-3 mb-4">
+
+            <h6 className="text-black mb-3">
+              Quick Links
+            </h6>
+
+            <ul className="list-unstyled text-secondary">
+
+              <li>
+                <Link
+                  href={makeLink("")}
+                  className="text-secondary text-decoration-none"
+                >
+                  Home
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  href={makeLink("/about")}
+                  className="text-secondary text-decoration-none"
+                >
+                  About
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  href={makeLink("/items")}
+                  className="text-secondary text-decoration-none"
+                >
+                  Products
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  href={makeLink("/services")}
+                  className="text-secondary text-decoration-none"
+                >
+                  Services
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  href={makeLink("/contact")}
+                  className="text-secondary text-decoration-none"
+                >
+                  Contact
+                </Link>
+              </li>
+
+            </ul>
+
+          </div>
+
+          {/* SERVICES */}
+          <div className="col-md-3 mb-4">
+
+            <h6 className="text-black mb-3">
+              Services
+            </h6>
+
+            <ul className="list-unstyled text-secondary">
+
+              <li>Diagnostic Equipment</li>
+
+              <li>Medical Consumables</li>
+
+              <li>Maintenance</li>
+
+              <li>Support</li>
+
+            </ul>
+
+          </div>
+
+          {/* CONTACT */}
+          <div className="col-md-3 mb-4">
+
+            <h6 className="text-black mb-3">
+              Contact
+            </h6>
+
+            <p className="text-secondary small mb-1">
+
+              📍
+
+              {citySlug === "jaipur"
+                ? " Jaipur, Rajasthan"
+                : ` ${city}, India`}
+
+            </p>
+
+            <p className="text-secondary small mb-1">
+              📞 +91 98765 43210
+            </p>
+
+            <p className="text-secondary small">
+              📧 info@rajbiosis.com
+            </p>
+
+          </div>
+
+        </div>
+
+        <hr className="border-secondary" />
+
+        {/* COPYRIGHT */}
+        <div className="text-center text-secondary small">
+
+          © {new Date().getFullYear()}
+          {" "}
+          Raj Biosis.
+          All rights reserved.
+
+        </div>
+
       </div>
 
-      {/* QUICK LINKS */}
-      <div className="col-md-3 mb-4">
-        <h6 className="text-black mb-3">Quick Links</h6>
-        <ul className="list-unstyled text-secondary">
-          <li><a href="/" className="text-secondary text-decoration-none">Home</a></li>
-          <li><a href="/about" className="text-secondary text-decoration-none">About</a></li>
-          <li><a href="/products" className="text-secondary text-decoration-none">Products</a></li>
-          <li><a href="/contact" className="text-secondary text-decoration-none">Contact</a></li>
-        </ul>
-      </div>
-
-      {/* SERVICES */}
-      <div className="col-md-3 mb-4">
-        <h6 className="text-black mb-3">Services</h6>
-        <ul className="list-unstyled text-secondary">
-          <li>Diagnostic Equipment</li>
-          <li>Medical Consumables</li>
-          <li>Maintenance</li>
-          <li>Support</li>
-        </ul>
-      </div>
-
-      {/* CONTACT */}
-      <div className="col-md-3 mb-4">
-        <h6 className="text-black mb-3">Contact</h6>
-        <p className="text-secondary small mb-1">📍 Jaipur, India</p>
-        <p className="text-secondary small mb-1">📞 +91 98765 43210</p>
-        <p className="text-secondary small">📧 info@rajbiosis.com</p>
-      </div>
-
-    </div>
-
-    <hr className="border-secondary" />
-
-    {/* COPYRIGHT */}
-    <div className="text-center text-secondary small">
-      © {new Date().getFullYear()} Raj Biosis. All rights reserved.
-    </div>
-  </div>
-</footer>
+    </footer>
   );
 }
