@@ -13,8 +13,72 @@ import "./globals.css";
 export default function Home({ city }) {
 
   const pathname = usePathname();
+  const pathParts = pathname
+  .split("/")
+  .filter(Boolean);
   // current city
-const currentCity = city || "jaipur";
+// const currentCity = city || "";
+const [currentCity, setCurrentCity] =
+  useState("jaipur");
+
+const [isValidCity, setIsValidCity] =
+  useState(false);
+
+useEffect(() => {
+
+  const checkDistrict =
+    async () => {
+
+      const slug =
+        pathParts[0];
+
+      if (!slug) {
+
+        setCurrentCity("jaipur");
+        setIsValidCity(false);
+
+        return;
+
+      }
+
+      try {
+
+        const snap = await getDoc(
+          doc(
+            db,
+            "websites",
+            "humanbiomedicalin",
+            "districts",
+            slug
+          )
+        );
+
+        // valid city
+        if (snap.exists()) {
+
+          setCurrentCity(slug);
+          setIsValidCity(true);
+
+        } else {
+
+          // invalid city
+          setCurrentCity("jaipur");
+          setIsValidCity(false);
+
+        }
+
+      } catch {
+
+        setCurrentCity("jaipur");
+        setIsValidCity(false);
+
+      }
+
+    };
+
+  checkDistrict();
+
+}, [pathname]);
 
 // format city
 const formatCity = (name = "") =>
@@ -44,11 +108,11 @@ const cityName =
   const [services, setServices] = useState([]);
 
   const [data, setData] = useState({
-    title: "Premium Medical Equipment Collection",
-    description:
-      "High-quality diagnostic machines designed for precision & performance.",
-    button1Text: "Explore Products",
-    button2Text: "Get Quote",
+    // title: "Premium Medical Equipment Collection",
+    // description:
+    //   "High-quality diagnostic machines designed for precision & performance.",
+    // button1Text: "Explore Products",
+    // button2Text: "Get Quote",
   });
 
   // ✅ FIX BLANK PAGE AFTER NAVIGATION
@@ -228,25 +292,36 @@ const cityName =
           <h1 className="hero-title">
          {data.title}
 {" "}
-{cityName && `in ${cityName}`}
+{isValidCity
+  ? ` in ${cityName}`
+  : ""}
           </h1>
 
           <p className="hero-desc mt-3">
       {data.description}
 {" "}
-{cityName &&
-  `available in ${cityName}`}
+{isValidCity
+  ? ` available in ${cityName}`
+  : ""}
           </p>
 
           <div className="mt-4 d-flex justify-content-center gap-3 flex-wrap">
 
-        <Link href={`/${citySlug}/products`}>
+        <Link href={
+  isValidCity
+    ? `/${citySlug}/products`
+    : "/products"
+}>
               <button className="btn btn-dark px-4">
                 {data.button1Text}
               </button>
             </Link>
 
-           <Link href={`/${citySlug}/get-in-touch`}>
+           <Link href={
+  isValidCity
+    ? `/${citySlug}/get-in-touch`
+    : "/get-in-touch"
+}>
               <button className="btn btn-outline-dark px-4">
                 {data.button2Text}
               </button>

@@ -1,17 +1,14 @@
-import Contact from "@/app/contact/page";
+import Contact from "@/app/sections/contact/ContactSection";
 
 export default async function Page({ params }) {
 
-  const resolvedParams = await params;
+  const resolvedParams =
+    await params;
 
   const district =
-    resolvedParams?.district || "jaipur";
+    resolvedParams?.district || "";
 
-  const city = district
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (char) =>
-      char.toUpperCase()
-    );
-
-  return <Contact city={city} />;
+  return (
+    <Contact city={district} />
+  );
 }

@@ -10,12 +10,14 @@ import "./Navbar.css";
 
 export default function Navbar() {
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] =
+    useState(false);
 
   const [scrolled, setScrolled] =
     useState(false);
 
-  const pathname = usePathname();
+  const pathname =
+    usePathname();
 
   // current path
   const pathParts = pathname
@@ -35,27 +37,45 @@ export default function Navbar() {
   // district slug
   const district =
     pathParts[0] &&
-    !reservedRoutes.includes(pathParts[0])
+    !reservedRoutes.includes(
+      pathParts[0]
+    )
       ? pathParts[0]
-      : "jaipur";
+      : "";
 
   // dynamic links
-  const makeLink = (path = "") => {
+  const makeLink = (
+    path = ""
+  ) => {
 
-    if (!path) {
-      return `/${district}`;
+    // no district
+    if (!district) {
+
+      return path || "/";
+
     }
 
+    // homepage
+    if (!path) {
+
+      return `/${district}`;
+
+    }
+
+    // other pages
     return `/${district}${path}`;
+
   };
 
   // scroll effect
   useEffect(() => {
 
     const handleScroll = () => {
+
       setScrolled(
         window.scrollY > 50
       );
+
     };
 
     window.addEventListener(
@@ -75,7 +95,9 @@ export default function Navbar() {
     <>
       <nav
         className={`navbar ${
-          scrolled ? "scrolled" : ""
+          scrolled
+            ? "scrolled"
+            : ""
         }`}
       >
 
@@ -100,13 +122,18 @@ export default function Navbar() {
           {/* CENTER - MENU */}
           <div
             className={`nav-links ${
-              open ? "active" : ""
+              open
+                ? "active"
+                : ""
             }`}
           >
 
+            {/* HOME */}
             <Link
               className={
-                pathname === makeLink("")
+                pathname ===
+                  makeLink("") ||
+                pathname === "/"
                   ? "active"
                   : ""
               }
@@ -115,45 +142,37 @@ export default function Navbar() {
               Home
             </Link>
 
+            {/* ABOUT */}
             <Link
-              className={
-                pathname.includes("/about")
-                  ? "active"
-                  : ""
-              }
+            className={
+              pathname.includes("/about")
+                ? "active"
+                : ""
+            }
               href={makeLink("/about")}
             >
               About
             </Link>
 
+            {/* PRODUCTS */}
             <Link
-              className={
-                pathname.includes("/services")
-                  ? "active"
-                  : ""
-              }
-              href={makeLink("/services")}
-            >
-              Services
-            </Link>
-
-            <Link
-              className={
-                pathname.includes("/items")
-                  ? "active"
-                  : ""
-              }
-              href={makeLink("/items")}
+            className={
+              pathname.includes("/products")
+                ? "active"
+                : ""
+            }
+              href={makeLink("/products")}
             >
               Products
             </Link>
 
+            {/* CONTACT */}
             <Link
-              className={
-                pathname.includes("/contact")
-                  ? "active"
-                  : ""
-              }
+            className={
+              pathname.includes("/contact")
+                ? "active"
+                : ""
+            }
               href={makeLink("/contact")}
             >
               Contact
@@ -174,9 +193,12 @@ export default function Navbar() {
 
             </Link>
 
+            {/* HAMBURGER */}
             <div
               className={`hamburger ${
-                open ? "open" : ""
+                open
+                  ? "open"
+                  : ""
               }`}
               onClick={() =>
                 setOpen(!open)

@@ -5,15 +5,21 @@ import { useEffect, useState } from "react";
 
 import { db } from "@/lib/firebase";
 
-import {
-  doc,
-  getDoc,
-  collection,
-  addDoc,
-} from "firebase/firestore";
-
+import { doc,getDoc,collection,addDoc,} from "firebase/firestore";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 export default function ContactSection({ city }) {
+const pathname = usePathname();
 
+const pathParts = pathname
+  .split("/")
+  .filter(Boolean);
+
+const [currentCity, setCurrentCity] =
+  useState("");
+
+const [isValidCity, setIsValidCity] =
+  useState(false);
   const [contactInfo, setContactInfo] =
     useState([]);
 
@@ -28,8 +34,9 @@ export default function ContactSection({ city }) {
   });
 
   // current city
-  const currentCity = city || "jaipur";
-
+  // const currentCity = city || "jaipur";
+const [stateName, setStateName] =
+  useState("");
   // format city
   const formatCity = (name = "") =>
     name
@@ -47,7 +54,72 @@ export default function ContactSection({ city }) {
 
   const cityName =
     formatCity(currentCity);
+useEffect(() => {
 
+  const checkDistrict =
+    async () => {
+
+  const slug =
+  pathParts[0];
+
+setStateName("");
+
+      // no slug
+      if (!slug) {
+
+        setCurrentCity("");
+        setIsValidCity(false);
+
+        return;
+
+      }
+
+      try {
+
+        const snap = await getDoc(
+          doc(
+            db,
+            "websites",
+            "humanbiomedicalin",
+            "districts",
+            slug
+          )
+        );
+
+        // valid city
+    if (snap.exists()) {
+
+  const data =
+    snap.data();
+
+  setCurrentCity(slug);
+
+  setStateName(
+    data?.state || ""
+  );
+
+  setIsValidCity(true);
+
+} else {
+
+          // invalid city
+          setCurrentCity("");
+          setIsValidCity(false);
+
+        }
+
+      } catch {
+
+        setCurrentCity("");
+        setIsValidCity(false);
+
+      }
+
+    };
+
+  checkDistrict();
+
+}, [pathname]);
   // LOAD CONTACT INFO
   useEffect(() => {
 
@@ -171,8 +243,9 @@ export default function ContactSection({ city }) {
           <h1>
             Contact Us
             {" "}
-            {cityName &&
-              `in ${cityName}`}
+         {isValidCity
+  ? ` in ${cityName}`
+  : ""}
           </h1>
 
           <p>
@@ -183,8 +256,9 @@ export default function ContactSection({ city }) {
 
             {" "}
 
-            {cityName &&
-              `in ${cityName}`}
+ {isValidCity
+  ? ` in ${cityName}`
+  : ""}
 
           </p>
 
@@ -200,22 +274,20 @@ export default function ContactSection({ city }) {
           {/* LOCATION */}
           <div className="col-md-4">
 
-            <div className="contact-card">
+<div className="contact-card">
 
-              <h5>📍 Location</h5>
+  <h5>📍 Location</h5>
 
-              <p>
+  <p>
 
-                {loading
-                  ? "Loading..."
-                  : getValue(
-                      "address"
-                    ) ||
-                    `${cityName}, India`}
+{loading
+  ? "Loading..."
+  : isValidCity
+    ? `${cityName}, ${stateName}, India`
+    : getValue("address")}
+  </p>
 
-              </p>
-
-            </div>
+</div>
 
           </div>
 

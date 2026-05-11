@@ -1,5 +1,9 @@
 "use client";
-
+import Link from "next/link";
+import {
+  usePathname,
+  useRouter
+} from "next/navigation";
 import { useState, useEffect } from "react";
 import "../products/product.css";
 import { doc, getDoc, addDoc, collection } from "firebase/firestore";
@@ -14,13 +18,27 @@ const [showForm, setShowForm] = useState(false);
 const [queryModal, setQueryModal] = useState(false);
 const [currentPage, setCurrentPage] = useState(1);
 const [productsPerPage, setProductsPerPage] = useState(25);
+const pathname = usePathname();
+const router = useRouter();
 const [queryForm, setQueryForm] = useState({
   email: "",
   phone: "",
 });
-// current city
-const currentCity = city || "jaipur";
+const pathParts = pathname
+  .split("/")
+  .filter(Boolean);
 
+const [currentCity, setCurrentCity] =
+  useState("jaipur");
+
+const [isValidCity, setIsValidCity] =
+  useState(false);
+  const makeSlug = (text = "") =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-");
 // format city
 const formatCity = (name = "") =>
   name
@@ -38,6 +56,62 @@ const citySlug = currentCity
 
 const cityName =
   formatCity(currentCity);
+  useEffect(() => {
+
+  const checkDistrict =
+    async () => {
+
+      const slug =
+        pathParts[0];
+
+      // no slug
+      if (!slug) {
+
+        setCurrentCity("jaipur");
+        setIsValidCity(false);
+
+        return;
+
+      }
+
+      try {
+
+        const snap = await getDoc(
+          doc(
+            db,
+            "websites",
+            "humanbiomedicalin",
+            "districts",
+            slug
+          )
+        );
+
+        // valid city
+        if (snap.exists()) {
+
+          setCurrentCity(slug);
+          setIsValidCity(true);
+
+        } else {
+
+          // invalid city
+          setCurrentCity("jaipur");
+          setIsValidCity(false);
+
+        }
+
+      } catch {
+
+        setCurrentCity("jaipur");
+        setIsValidCity(false);
+
+      }
+
+    };
+
+  checkDistrict();
+
+}, [pathname]);
 useEffect(() => {
   Modal.setAppElement("body");
 }, []);
@@ -143,13 +217,17 @@ const handleSubmitQuery = async () => {
         <div className="container text-center hero-inner">
           <h1 className="hero-title">
            Our <span>Products</span>
-{cityName && ` in ${cityName}`}
+{isValidCity
+  ? ` in ${cityName}`
+  : ""}
           </h1>
 
           <p className="hero-subtitle">
        High-quality medical products engineered for accuracy,
 reliability, and exceptional performance
-{cityName && ` in ${cityName}`}.
+{isValidCity
+  ? ` in ${cityName}`
+  : ""}
           </p>
         </div>
       </section>
@@ -159,7 +237,11 @@ reliability, and exceptional performance
         {/* SEARCH */}
         <input
           className="form-control mb-4"
-        placeholder={`Search product in ${cityName}...`}
+        placeholder={
+  cityName
+    ? `Search product in ${cityName}...`
+    : "Search product..."
+}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -187,16 +269,31 @@ reliability, and exceptional performance
                           <p><b>Usage:</b> {p.usage || "-"}</p>
                         </div>
 
-      <button
-       className="btn btn-dark product-btn"
-onClick={() => {
-  setSelected(p);
-  setActiveImg(p.image);
-  setShowForm(false);
-}}
-      >
-        View
-      </button>
+<button
+  className="btn btn-dark product-btn"
+
+  onClick={() => {
+
+    setSelected(p);
+
+    setActiveImg(p.image);
+
+    setShowForm(false);
+
+window.history.replaceState(
+  {},
+  "",
+  isValidCity
+    ? `/${citySlug}/products/${makeSlug(p.title)}`
+    : `/products/${makeSlug(p.title)}`
+);
+
+  }}
+>
+
+  View
+
+</button>
     </div>
 
   </div>
@@ -273,14 +370,38 @@ onClick={() => {
         {/* MODAL */}
 <Modal
   isOpen={!!selected}
-  onRequestClose={() => setSelected(null)}
+onRequestClose={() => {
+
+  setSelected(null);
+
+window.history.replaceState(
+  {},
+  "",
+  isValidCity
+    ? `/${citySlug}/products`
+    : "/products"
+);
+
+}}
   className="react-modal-content"
   overlayClassName="react-modal-overlay"
 >
 
   <button
     className="close-btn"
-    onClick={() => setSelected(null)}
+   onClick={() => {
+
+  setSelected(null);
+
+window.history.replaceState(
+  {},
+  "",
+  isValidCity
+    ? `/${citySlug}/products`
+    : "/products"
+);
+
+}}
   >
     ✖
   </button>

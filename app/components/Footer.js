@@ -1,12 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function Footer() {
 
   const pathname = usePathname();
-
+  const [contactInfo, setContactInfo] =
+    useState([]);
   const pathParts = pathname
     .split("/")
     .filter(Boolean);
@@ -20,11 +24,11 @@ export default function Footer() {
   ];
 
   // district slug
-  const district =
-    pathParts[0] &&
-    !reservedRoutes.includes(pathParts[0])
-      ? pathParts[0]
-      : "jaipur";
+const district =
+  pathParts[0] &&
+  !reservedRoutes.includes(pathParts[0])
+    ? pathParts[0]
+    : "";
 
   // format city
   const formatCity = (name = "") =>
@@ -39,17 +43,121 @@ export default function Footer() {
   const citySlug = district;
 
   const city = formatCity(citySlug);
-
+const [stateName, setStateName] =
+  useState("");
   // dynamic links
-  const makeLink = (path = "") => {
+const makeLink = (path = "") => {
 
-    if (!path) {
-      return `/${citySlug}`;
+  // no district
+  if (!citySlug) {
+
+    return path || "/";
+
+  }
+
+  // homepage
+  if (!path) {
+
+    return `/${citySlug}`;
+
+  }
+
+  // other pages
+  return `/${citySlug}${path}`;
+};
+useEffect(() => {
+
+  const fetchContact =
+    async () => {
+
+      try {
+
+        const snap = await getDoc(
+          doc(
+            db,
+            "websites",
+            "humanbiomedicalin",
+            "pages",
+            "contact"
+          )
+        );
+
+        if (snap.exists()) {
+
+          setContactInfo(
+            snap.data().contactInfo || []
+          );
+
+        }
+
+      } catch (err) {
+
+        console.log(err);
+
+      }
+
+    };
+
+  fetchContact();
+
+}, []);
+useEffect(() => {
+
+  const loadDistrict = async () => {
+
+    if (!citySlug) return;
+
+    try {
+
+      const snap = await getDoc(
+        doc(
+          db,
+          "websites",
+          "humanbiomedicalin",
+          "districts",
+          citySlug
+        )
+      );
+
+      if (snap.exists()) {
+
+        setStateName(
+          snap.data()?.state || ""
+        );
+
+      }
+
+    } catch (err) {
+
+      console.log(err);
+
     }
 
-    return `/${citySlug}${path}`;
   };
 
+  loadDistrict();
+
+}, [citySlug]);
+  const getValue = (key) => {
+
+    return (
+      contactInfo.find((x) => {
+
+        const label =
+          x.label?.toLowerCase();
+
+        return (
+          label?.includes(key) ||
+          (key === "address" &&
+            label?.includes(
+              "location"
+            ))
+        );
+
+      })?.value || "-"
+    );
+
+  };
   return (
     <footer className="text-white pt-5 pb-3">
 
@@ -101,7 +209,7 @@ export default function Footer() {
 
               <li>
                 <Link
-                  href={makeLink("/items")}
+                  href={makeLink("/products")}
                   className="text-secondary text-decoration-none"
                 >
                   Products
@@ -158,15 +266,15 @@ export default function Footer() {
               Contact
             </h6>
 
-            <p className="text-secondary small mb-1">
+<p className="text-secondary small mb-1">
 
-              📍
+  📍
 
-              {citySlug === "jaipur"
-                ? " Jaipur, Rajasthan"
-                : ` ${city}, India`}
+{district && stateName
+  ? `${city}, ${stateName}, India`
+  : getValue("address")}
 
-            </p>
+</p>
 
             <p className="text-secondary small mb-1">
               📞 +91 98765 43210
