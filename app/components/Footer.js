@@ -169,7 +169,7 @@ useEffect(() => {
           <div className="col-md-3 mb-4">
 
             <h5 className="text-black">
-              Raj Biosis
+              Human Biomedical
             </h5>
 
             <p className="text-secondary small">
@@ -216,14 +216,14 @@ useEffect(() => {
                 </Link>
               </li>
 
-              <li>
+              {/* <li>
                 <Link
                   href={makeLink("/services")}
                   className="text-secondary text-decoration-none"
                 >
                   Services
                 </Link>
-              </li>
+              </li> */}
 
               <li>
                 <Link
@@ -276,13 +276,13 @@ useEffect(() => {
 
 </p>
 
-            <p className="text-secondary small mb-1">
-              📞 +91 98765 43210
-            </p>
+<p className="text-secondary small mb-1">
+  📞 {getValue("phone")}
+</p>
 
-            <p className="text-secondary small">
-              📧 info@rajbiosis.com
-            </p>
+<p className="text-secondary small">
+  📧 {getValue("email")}
+</p>
 
           </div>
 
@@ -295,7 +295,7 @@ useEffect(() => {
 
           © {new Date().getFullYear()}
           {" "}
-          Raj Biosis.
+          Human Biomedical.
           All rights reserved.
 
         </div>

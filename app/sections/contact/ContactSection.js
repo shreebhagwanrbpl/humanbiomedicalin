@@ -2,7 +2,7 @@
 
 import "./contact.css";
 import { useEffect, useState } from "react";
-
+import toast, { Toaster } from "react-hot-toast";
 import { db } from "@/lib/firebase";
 
 import { doc,getDoc,collection,addDoc,} from "firebase/firestore";
@@ -25,7 +25,8 @@ const [isValidCity, setIsValidCity] =
 
   const [loading, setLoading] =
     useState(true);
-
+const [mounted, setMounted] =
+  useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -54,6 +55,9 @@ const [stateName, setStateName] =
 
   const cityName =
     formatCity(currentCity);
+    useEffect(() => {
+  setMounted(true);
+}, []);
 useEffect(() => {
 
   const checkDistrict =
@@ -173,42 +177,57 @@ setStateName("");
   };
 
   // SUBMIT
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
+  // EMPTY FIELD VALIDATION
+  if (
+    !form.name.trim() ||
+    !form.email.trim() ||
+    !form.phone.trim() ||
+    !form.message.trim()
+  ) {
 
-      await addDoc(
-        collection(
-          db,
-          "websitesQueries",
-          "humanbiomedicalin",
-          "contactQueries"
-        ),
-        {
-          ...form,
-          city: cityName,
-          createdAt: new Date(),
-        }
-      );
+    toast.error("Please fill all fields");
+    return;
 
-      alert("Message Sent");
+  }
 
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        message: "",
-      });
+  try {
 
-    } catch (err) {
+    await addDoc(
+      collection(
+        db,
+        "websitesQueries",
+        "humanbiomedicalin",
+        "contactQueries"
+      ),
+      {
+        ...form,
+        city: cityName,
+        createdAt: new Date(),
+      }
+    );
 
-      console.log(err);
+    toast.success("Message Sent Successfully");
 
-    }
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      message: "",
+    });
 
-  };
+  } catch (err) {
+
+    console.log(err);
+
+    toast.error("Failed to send message");
+
+  }
+
+};
 
   // HELPERS
   const getValue = (key) => {
@@ -231,10 +250,22 @@ setStateName("");
     );
 
   };
-
+if (!mounted || loading) {
   return (
+    <div className="page-loader">
+      <div className="loader-circle"></div>
+
+      <h2>Human Biomedical</h2>
+
+      <p>Loading amazing healthcare solutions...</p>
+    </div>
+  );
+}
+  return (
+    <><Toaster position="top-right" reverseOrder={false} />
     <div>
 
+  {/* baaki code */}
       {/* HERO */}
       <section className="contact-hero text-center">
 
@@ -440,5 +471,6 @@ setStateName("");
       </section>
 
     </div>
+    </>
   );
 }

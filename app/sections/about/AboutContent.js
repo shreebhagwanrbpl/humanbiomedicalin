@@ -1,22 +1,57 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./about.css"
 export default function AboutSection() {
+const [mounted, setMounted] = useState(false);
+const [loading, setLoading] = useState(true);
+useEffect(() => {
 
-  useEffect(() => {
-    const items = document.querySelectorAll(".fade-up");
-    items.forEach((el, i) => {
-      setTimeout(() => el.classList.add("active"), i * 150);
-    });
-  }, []);
+  setLoading(true);
 
+  const items =
+    document.querySelectorAll(".fade-up");
+
+  items.forEach((el, i) => {
+
+    el.classList.remove("active");
+
+    setTimeout(() => {
+      el.classList.add("active");
+    }, i * 150);
+
+  });
+
+  const timer = setTimeout(() => {
+
+    setMounted(true);
+
+    setLoading(false);
+
+  }, 600);
+
+  return () => clearTimeout(timer);
+
+}, []);
+  if (!mounted || loading) {
+
+    return (
+<div className="page-loader">
+  <div className="loader-circle"></div>
+
+  <h2>Human Biomedical</h2>
+
+  <p>Loading amazing healthcare solutions...</p>
+</div>
+    );
+
+  }
   return (
     <div className="about-page">
       {/* HERO */}
      <section className="about-hero">
         <div className="container text-center hero-inner">
             <h1 className="hero-title">
-            About <span>Raj Biosis</span>
+            About <span>Human Biomedical</span>
             </h1>
             <p className="hero-subtitle">
             Delivering advanced medical solutions with precision, trust, and innovation.
@@ -39,7 +74,7 @@ export default function AboutSection() {
           <div className="col-md-6 fade-up">
             <h2 className="fw-bold mb-3">Who We Are</h2>
             <p>
-              Raj Biosis is a trusted name in the field of medical and diagnostic
+              Human Biomedical is a trusted name in the field of medical and diagnostic
               equipment. We provide high-quality instruments, reagents, and lab
               solutions designed for accuracy and performance.
             </p>

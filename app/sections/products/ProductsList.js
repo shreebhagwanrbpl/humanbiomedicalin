@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
 import {
   usePathname,
   useRouter
@@ -29,10 +30,16 @@ const pathParts = pathname
   .filter(Boolean);
 
 const [currentCity, setCurrentCity] =
-  useState("jaipur");
+  useState("");
 
 const [isValidCity, setIsValidCity] =
   useState(false);
+
+  const [mounted, setMounted] =
+  useState(false);
+
+const [loadingProducts, setLoadingProducts] =
+  useState(true);
   const makeSlug = (text = "") =>
   text
     .toLowerCase()
@@ -67,7 +74,7 @@ const cityName =
       // no slug
       if (!slug) {
 
-        setCurrentCity("jaipur");
+        setCurrentCity("");
         setIsValidCity(false);
 
         return;
@@ -95,14 +102,14 @@ const cityName =
         } else {
 
           // invalid city
-          setCurrentCity("jaipur");
+          setCurrentCity("");
           setIsValidCity(false);
 
         }
 
       } catch {
 
-        setCurrentCity("jaipur");
+        setCurrentCity("");
         setIsValidCity(false);
 
       }
@@ -114,6 +121,9 @@ const cityName =
 }, [pathname]);
 useEffect(() => {
   Modal.setAppElement("body");
+}, []);
+useEffect(() => {
+  setMounted(true);
 }, []);
 const filteredProducts = products.filter((p) => {
 
@@ -156,9 +166,11 @@ const paginatedProducts =
           const published = data.filter((p) => p.isPublished);
 
           setProducts(published);
+          setLoadingProducts(false);
         }
       } catch (err) {
         console.log(err);
+         setLoadingProducts(false);
       }
     };
 
@@ -171,12 +183,22 @@ const handleFormChange = (e) => {
   });
 };
 const handleSubmitQuery = async () => {
+
   try {
 
     const { email, phone } = queryForm;
 
-    if (!email || !phone) {
-      return alert("Please fill all fields");
+    if (
+      !email.trim() ||
+      !phone.trim()
+    ) {
+
+      toast.error(
+        "Please fill all fields"
+      );
+
+      return;
+
     }
 
     await addDoc(
@@ -186,16 +208,19 @@ const handleSubmitQuery = async () => {
         "humanbiomedicalin",
         "productQueries"
       ),
-{
-  city: cityName,
-  productName: selected.title || "",
-  email,
-  phone,
-  createdAt: new Date(),
-}
+      {
+        city: cityName,
+        productName:
+          selected.title || "",
+        email,
+        phone,
+        createdAt: new Date(),
+      }
     );
 
-    alert("Query submitted");
+    toast.success(
+      "Query submitted successfully"
+    );
 
     setQueryForm({
       email: "",
@@ -205,13 +230,36 @@ const handleSubmitQuery = async () => {
     setShowForm(false);
 
   } catch (err) {
-    console.log(err);
-    alert("Something went wrong");
-  }
-};
 
+    console.log(err);
+
+    toast.error(
+      "Something went wrong"
+    );
+
+  }
+
+};
+if (!mounted || loadingProducts) {
+  return (
+    <div className="page-loader">
+      <div className="loader-circle"></div>
+
+      <h2>Human Biomedical</h2>
+
+      <p>Loading amazing healthcare solutions...</p>
+    </div>
+  );
+}
   return (
     <>
+<Toaster
+  position="top-right"
+  reverseOrder={false}
+  containerStyle={{
+    zIndex: 9999999999,
+  }}
+/>
       {/* HERO */}
       <section className="product-hero">
         <div className="container text-center hero-inner">
@@ -284,8 +332,8 @@ window.history.replaceState(
   {},
   "",
   isValidCity
-    ? `/${citySlug}/products/${makeSlug(p.title)}`
-    : `/products/${makeSlug(p.title)}`
+    ? `/${citySlug}/products`
+    : "/products"
 );
 
   }}

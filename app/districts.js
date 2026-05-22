@@ -27,7 +27,7 @@ export async function generateMetadata({ params }) {
     );
 
   return {
-    title: `Diagnostic Lab in ${city} | Raj Biosis`,
+    title: `Diagnostic Lab in ${city} | Human Biomedical`,
     description: `Best diagnostic lab services in ${city}. Medical equipment, analyzers, reagents and healthcare solutions.`,
 
     keywords: [

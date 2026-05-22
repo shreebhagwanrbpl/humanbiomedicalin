@@ -16,8 +16,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] =
     useState(false);
 
-  const pathname =
-    usePathname();
+  const pathname = usePathname();
 
   // current path
   const pathParts = pathname
@@ -108,12 +107,13 @@ export default function Navbar() {
 
             <Link href={makeLink("")}>
 
-              <Image
-                src="/logo.png"
-                alt="logo"
-                width={96}
-                height={83}
-              />
+<Image
+  src="/humanlogo.png"
+  alt="logo"
+  width={140}
+  height={70}
+  priority
+/>
 
             </Link>
 
@@ -181,7 +181,7 @@ export default function Navbar() {
           </div>
 
           {/* RIGHT */}
-          <div className="nav-right">
+          {/* <div className="nav-right">
 
             <Link
               href={makeLink("/contact")}
@@ -193,7 +193,7 @@ export default function Navbar() {
 
             </Link>
 
-            {/* HAMBURGER */}
+          
             <div
               className={`hamburger ${
                 open
@@ -211,7 +211,7 @@ export default function Navbar() {
 
             </div>
 
-          </div>
+          </div> */}
 
         </div>
 

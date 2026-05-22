@@ -186,3 +186,41 @@ section {
     transform: translateY(0);
   }
 }
+.page-loader{
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #f7f7f7, #e6d7d7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.page-loader h2{
+  font-size: 32px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.page-loader p{
+  color: #555;
+  font-size: 15px;
+  margin: 0;
+}
+
+.loader-circle{
+  width: 65px;
+  height: 65px;
+  border: 5px solid #ddd;
+  border-top: 5px solid #111;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin{
+  100%{
+    transform: rotate(360deg);
+  }
+}

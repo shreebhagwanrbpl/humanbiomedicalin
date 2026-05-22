@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import Link from "next/link";
+
 // import toast from "react-hot-toast";
 import Image from "next/image";
 import "./globals.css";
@@ -19,11 +20,12 @@ export default function Home({ city }) {
   // current city
 // const currentCity = city || "";
 const [currentCity, setCurrentCity] =
-  useState("jaipur");
+  useState("");
 
 const [isValidCity, setIsValidCity] =
   useState(false);
-
+const [loading, setLoading] =
+  useState(true);
 useEffect(() => {
 
   const checkDistrict =
@@ -34,7 +36,7 @@ useEffect(() => {
 
       if (!slug) {
 
-        setCurrentCity("jaipur");
+        setCurrentCity("");
         setIsValidCity(false);
 
         return;
@@ -62,14 +64,14 @@ useEffect(() => {
         } else {
 
           // invalid city
-          setCurrentCity("jaipur");
+          setCurrentCity("");
           setIsValidCity(false);
 
         }
 
       } catch {
 
-        setCurrentCity("jaipur");
+        setCurrentCity("");
         setIsValidCity(false);
 
       }
@@ -114,13 +116,17 @@ const cityName =
     // button1Text: "Explore Products",
     // button2Text: "Get Quote",
   });
-
+const [homeLoading, setHomeLoading] =
+  useState(true);
   // ✅ FIX BLANK PAGE AFTER NAVIGATION
   useEffect(() => {
     setMounted(true);
     window.scrollTo(0, 0);
   }, [pathname]);
-
+const makeLink = (path = "") => {
+  if (!citySlug) return path || "/";
+  return `/${citySlug}${path}`;
+};
   // ✅ COUNTER
   useEffect(() => {
 
@@ -223,8 +229,10 @@ const cityName =
       (docSnap) => {
 
         if (docSnap.exists()) {
-          setData(docSnap.data());
-        }
+  setData(docSnap.data());
+}
+
+setHomeLoading(false);
 
       }
     );
@@ -234,54 +242,49 @@ const cityName =
   }, [pathname]);
 
   // ✅ ANIMATION FIX
-  useEffect(() => {
+useEffect(() => {
 
-    const elements =
-      document.querySelectorAll(".fade-up");
+  setLoading(true);
 
-    const observer =
-      new IntersectionObserver((entries) => {
+  const items =
+    document.querySelectorAll(".fade-up");
 
-        entries.forEach((entry) => {
+  items.forEach((el, i) => {
 
-          if (entry.isIntersecting) {
-            entry.target.classList.add("show");
-          }
+    el.classList.remove("active");
 
-        });
+    setTimeout(() => {
+      el.classList.add("active");
+    }, i * 150);
 
-      });
+  });
 
-    elements.forEach((el) =>
-      observer.observe(el)
-    );
+  const timer = setTimeout(() => {
 
-    return () => observer.disconnect();
+    setMounted(true);
 
-  }, [pathname]);
+    setLoading(false);
+
+  }, 500);
+
+  return () => clearTimeout(timer);
+
+}, [pathname]);
 
   // ✅ PREVENT BLANK PAGE
-  if (!mounted) {
+if (!mounted || homeLoading || loading) {
 
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#fff",
-          color: "#111",
-          fontSize: "18px",
-          fontWeight: "600",
-        }}
-      >
-        Loading...
-      </div>
+<div className="page-loader">
+  <div className="loader-circle"></div>
+
+  <h2>Human Biomedical</h2>
+
+  <p>Loading amazing healthcare solutions...</p>
+</div>
     );
 
   }
-
   return (
     <div className="text-white">
 
@@ -319,8 +322,8 @@ const cityName =
 
            <Link href={
   isValidCity
-    ? `/${citySlug}/get-in-touch`
-    : "/get-in-touch"
+    ? `/${citySlug}/contact`
+    : "/contact"
 }>
               <button className="btn btn-outline-dark px-4">
                 {data.button2Text}
@@ -533,14 +536,14 @@ const cityName =
               </p>
 
               <div className="mt-4 d-flex gap-3">
-
+<Link href={makeLink("/about")}>
                 <button className="btn btn-light px-4">
                   Know More
                 </button>
-
-                <button className="btn btn-outline-light px-4">
+</Link>
+                {/* <button className="btn btn-outline-light px-4">
                   Contact Us
-                </button>
+                </button> */}
 
               </div>
 
@@ -571,10 +574,10 @@ const cityName =
             {/* <button className="btn cta-btn">
               Get Quote
             </button> */}
-<Link href={`/${citySlug}/get-in-touch`}>
-            <button className="btn cta-btn-outline">
-              Contact Us
-            </button>
+<Link href={makeLink("/contact")}>
+  <button className="btn cta-btn-outline">
+    Contact Us
+  </button>
 </Link>
           </div>
 
