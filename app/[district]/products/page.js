@@ -1,4 +1,4 @@
-import ProductsList from "@/app/sections/products/ProductsList";
+import ProductsList from "@/app/sections/items/ProductsList";
 
 export default function ProductsPage({ params }) {
 

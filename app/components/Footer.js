@@ -24,11 +24,11 @@ export default function Footer() {
   ];
 
   // district slug
-const district =
-  pathParts[0] &&
-  !reservedRoutes.includes(pathParts[0])
-    ? pathParts[0]
-    : "";
+  const district =
+    pathParts[0] &&
+      !reservedRoutes.includes(pathParts[0])
+      ? pathParts[0]
+      : "";
 
   // format city
   const formatCity = (name = "") =>
@@ -43,32 +43,69 @@ const district =
   const citySlug = district;
 
   const city = formatCity(citySlug);
-const [stateName, setStateName] =
-  useState("");
+  const [stateName, setStateName] =
+    useState("");
   // dynamic links
-const makeLink = (path = "") => {
+  const makeLink = (path = "") => {
 
-  // no district
-  if (!citySlug) {
+    // no district
+    if (!citySlug) {
 
-    return path || "/";
+      return path || "/";
 
-  }
+    }
 
-  // homepage
-  if (!path) {
+    // homepage
+    if (!path) {
 
-    return `/${citySlug}`;
+      return `/${citySlug}`;
 
-  }
+    }
 
-  // other pages
-  return `/${citySlug}${path}`;
-};
-useEffect(() => {
+    // other pages
+    return `/${citySlug}${path}`;
+  };
+  useEffect(() => {
 
-  const fetchContact =
-    async () => {
+    const fetchContact =
+      async () => {
+
+        try {
+
+          const snap = await getDoc(
+            doc(
+              db,
+              "websites",
+              "humanbiomedicalin",
+              "pages",
+              "contact"
+            )
+          );
+
+          if (snap.exists()) {
+
+            setContactInfo(
+              snap.data().contactInfo || []
+            );
+
+          }
+
+        } catch (err) {
+
+          console.log(err);
+
+        }
+
+      };
+
+    fetchContact();
+
+  }, []);
+  useEffect(() => {
+
+    const loadDistrict = async () => {
+
+      if (!citySlug) return;
 
       try {
 
@@ -77,15 +114,15 @@ useEffect(() => {
             db,
             "websites",
             "humanbiomedicalin",
-            "pages",
-            "contact"
+            "districts",
+            citySlug
           )
         );
 
         if (snap.exists()) {
 
-          setContactInfo(
-            snap.data().contactInfo || []
+          setStateName(
+            snap.data()?.state || ""
           );
 
         }
@@ -98,46 +135,9 @@ useEffect(() => {
 
     };
 
-  fetchContact();
+    loadDistrict();
 
-}, []);
-useEffect(() => {
-
-  const loadDistrict = async () => {
-
-    if (!citySlug) return;
-
-    try {
-
-      const snap = await getDoc(
-        doc(
-          db,
-          "websites",
-          "humanbiomedicalin",
-          "districts",
-          citySlug
-        )
-      );
-
-      if (snap.exists()) {
-
-        setStateName(
-          snap.data()?.state || ""
-        );
-
-      }
-
-    } catch (err) {
-
-      console.log(err);
-
-    }
-
-  };
-
-  loadDistrict();
-
-}, [citySlug]);
+  }, [citySlug]);
   const getValue = (key) => {
 
     return (
@@ -209,7 +209,7 @@ useEffect(() => {
 
               <li>
                 <Link
-                  href={makeLink("/products")}
+                  href={makeLink("/items")}
                   className="text-secondary text-decoration-none"
                 >
                   Products
@@ -266,23 +266,23 @@ useEffect(() => {
               Contact
             </h6>
 
-<p className="text-secondary small mb-1">
+            <p className="text-secondary small mb-1">
 
-  📍
+              📍
 
-{district && stateName
-  ? `${city}, ${stateName}, India`
-  : getValue("address")}
+              {district && stateName
+                ? `${city}, ${stateName}, India`
+                : getValue("address")}
 
-</p>
+            </p>
 
-<p className="text-secondary small mb-1">
-  📞 {getValue("phone")}
-</p>
+            <p className="text-secondary small mb-1">
+              📞 {getValue("phone")}
+            </p>
 
-<p className="text-secondary small">
-  📧 {getValue("email")}
-</p>
+            <p className="text-secondary small">
+              📧 {getValue("email")}
+            </p>
 
           </div>
 

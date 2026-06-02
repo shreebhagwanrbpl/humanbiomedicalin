@@ -15,90 +15,90 @@ export default function Home({ city }) {
 
   const pathname = usePathname();
   const pathParts = pathname
-  .split("/")
-  .filter(Boolean);
+    .split("/")
+    .filter(Boolean);
   // current city
-// const currentCity = city || "";
-const [currentCity, setCurrentCity] =
-  useState("");
+  // const currentCity = city || "";
+  const [currentCity, setCurrentCity] =
+    useState("");
 
-const [isValidCity, setIsValidCity] =
-  useState(false);
-const [loading, setLoading] =
-  useState(true);
-useEffect(() => {
+  const [isValidCity, setIsValidCity] =
+    useState(false);
+  const [loading, setLoading] =
+    useState(true);
+  useEffect(() => {
 
-  const checkDistrict =
-    async () => {
+    const checkDistrict =
+      async () => {
 
-      const slug =
-        pathParts[0];
+        const slug =
+          pathParts[0];
 
-      if (!slug) {
+        if (!slug) {
 
-        setCurrentCity("");
-        setIsValidCity(false);
+          setCurrentCity("");
+          setIsValidCity(false);
 
-        return;
+          return;
 
-      }
+        }
 
-      try {
+        try {
 
-        const snap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "districts",
-            slug
-          )
-        );
+          const snap = await getDoc(
+            doc(
+              db,
+              "websites",
+              "humanbiomedicalin",
+              "districts",
+              slug
+            )
+          );
 
-        // valid city
-        if (snap.exists()) {
+          // valid city
+          if (snap.exists()) {
 
-          setCurrentCity(slug);
-          setIsValidCity(true);
+            setCurrentCity(slug);
+            setIsValidCity(true);
 
-        } else {
+          } else {
 
-          // invalid city
+            // invalid city
+            setCurrentCity("");
+            setIsValidCity(false);
+
+          }
+
+        } catch {
+
           setCurrentCity("");
           setIsValidCity(false);
 
         }
 
-      } catch {
+      };
 
-        setCurrentCity("");
-        setIsValidCity(false);
+    checkDistrict();
 
-      }
+  }, [pathname]);
 
-    };
+  // format city
+  const formatCity = (name = "") =>
+    name
+      .split("-")
+      .map(
+        (w) =>
+          w.charAt(0).toUpperCase() +
+          w.slice(1)
+      )
+      .join(" ");
 
-  checkDistrict();
+  const citySlug = currentCity
+    ?.toLowerCase()
+    ?.replace(/\s+/g, "-");
 
-}, [pathname]);
-
-// format city
-const formatCity = (name = "") =>
-  name
-    .split("-")
-    .map(
-      (w) =>
-        w.charAt(0).toUpperCase() +
-        w.slice(1)
-    )
-    .join(" ");
-
-const citySlug = currentCity
-  ?.toLowerCase()
-  ?.replace(/\s+/g, "-");
-
-const cityName =
-  formatCity(currentCity);
+  const cityName =
+    formatCity(currentCity);
   const [mounted, setMounted] = useState(false);
 
   const [counts, setCounts] = useState([0, 0, 0, 0]);
@@ -116,17 +116,17 @@ const cityName =
     // button1Text: "Explore Products",
     // button2Text: "Get Quote",
   });
-const [homeLoading, setHomeLoading] =
-  useState(true);
+  const [homeLoading, setHomeLoading] =
+    useState(true);
   // ✅ FIX BLANK PAGE AFTER NAVIGATION
   useEffect(() => {
     setMounted(true);
     window.scrollTo(0, 0);
   }, [pathname]);
-const makeLink = (path = "") => {
-  if (!citySlug) return path || "/";
-  return `/${citySlug}${path}`;
-};
+  const makeLink = (path = "") => {
+    if (!citySlug) return path || "/";
+    return `/${citySlug}${path}`;
+  };
   // ✅ COUNTER
   useEffect(() => {
 
@@ -229,10 +229,10 @@ const makeLink = (path = "") => {
       (docSnap) => {
 
         if (docSnap.exists()) {
-  setData(docSnap.data());
-}
+          setData(docSnap.data());
+        }
 
-setHomeLoading(false);
+        setHomeLoading(false);
 
       }
     );
@@ -242,46 +242,46 @@ setHomeLoading(false);
   }, [pathname]);
 
   // ✅ ANIMATION FIX
-useEffect(() => {
+  useEffect(() => {
 
-  setLoading(true);
+    setLoading(true);
 
-  const items =
-    document.querySelectorAll(".fade-up");
+    const items =
+      document.querySelectorAll(".fade-up");
 
-  items.forEach((el, i) => {
+    items.forEach((el, i) => {
 
-    el.classList.remove("active");
+      el.classList.remove("active");
 
-    setTimeout(() => {
-      el.classList.add("active");
-    }, i * 150);
+      setTimeout(() => {
+        el.classList.add("active");
+      }, i * 150);
 
-  });
+    });
 
-  const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
 
-    setMounted(true);
+      setMounted(true);
 
-    setLoading(false);
+      setLoading(false);
 
-  }, 500);
+    }, 500);
 
-  return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
 
-}, [pathname]);
+  }, [pathname]);
 
   // ✅ PREVENT BLANK PAGE
-if (!mounted || homeLoading || loading) {
+  if (!mounted || homeLoading || loading) {
 
     return (
-<div className="page-loader">
-  <div className="loader-circle"></div>
+      <div className="page-loader">
+        <div className="loader-circle"></div>
 
-  <h2>Human Biomedical</h2>
+        <h2>Human Biomedical</h2>
 
-  <p>Loading amazing healthcare solutions...</p>
-</div>
+        <p>Loading amazing healthcare solutions...</p>
+      </div>
     );
 
   }
@@ -293,38 +293,38 @@ if (!mounted || homeLoading || loading) {
         <div className="container">
 
           <h1 className="hero-title">
-         {data.title}
-{" "}
-{isValidCity
-  ? ` in ${cityName}`
-  : ""}
+            {data.title}
+            {" "}
+            {isValidCity
+              ? ` in ${cityName}`
+              : ""}
           </h1>
 
           <p className="hero-desc mt-3">
-      {data.description}
-{" "}
-{isValidCity
-  ? ` available in ${cityName}`
-  : ""}
+            {data.description}
+            {" "}
+            {isValidCity
+              ? ` available in ${cityName}`
+              : ""}
           </p>
 
           <div className="mt-4 d-flex justify-content-center gap-3 flex-wrap">
 
-        <Link href={
-  isValidCity
-    ? `/${citySlug}/products`
-    : "/products"
-}>
+            <Link href={
+              isValidCity
+                ? `/${citySlug}/items`
+                : "/items"
+            }>
               <button className="btn btn-dark px-4">
                 {data.button1Text}
               </button>
             </Link>
 
-           <Link href={
-  isValidCity
-    ? `/${citySlug}/contact`
-    : "/contact"
-}>
+            <Link href={
+              isValidCity
+                ? `/${citySlug}/contact`
+                : "/contact"
+            }>
               <button className="btn btn-outline-dark px-4">
                 {data.button2Text}
               </button>
@@ -463,7 +463,7 @@ if (!mounted || homeLoading || loading) {
                       {item.desc?.slice(0, 50)}...
                     </p>
 
-              <Link href={`/${citySlug}/products`}>
+                    <Link href={`/${citySlug}/items`}>
 
                       <button className="btn product-btn w-100 view-btn">
                         View Details
@@ -536,11 +536,11 @@ if (!mounted || homeLoading || loading) {
               </p>
 
               <div className="mt-4 d-flex gap-3">
-<Link href={makeLink("/about")}>
-                <button className="btn btn-light px-4">
-                  Know More
-                </button>
-</Link>
+                <Link href={makeLink("/about")}>
+                  <button className="btn btn-light px-4">
+                    Know More
+                  </button>
+                </Link>
                 {/* <button className="btn btn-outline-light px-4">
                   Contact Us
                 </button> */}
@@ -574,11 +574,11 @@ if (!mounted || homeLoading || loading) {
             {/* <button className="btn cta-btn">
               Get Quote
             </button> */}
-<Link href={makeLink("/contact")}>
-  <button className="btn cta-btn-outline">
-    Contact Us
-  </button>
-</Link>
+            <Link href={makeLink("/contact")}>
+              <button className="btn cta-btn-outline">
+                Contact Us
+              </button>
+            </Link>
           </div>
 
         </div>

@@ -36,9 +36,9 @@ export default function Navbar() {
   // district slug
   const district =
     pathParts[0] &&
-    !reservedRoutes.includes(
-      pathParts[0]
-    )
+      !reservedRoutes.includes(
+        pathParts[0]
+      )
       ? pathParts[0]
       : "";
 
@@ -93,11 +93,10 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`navbar ${
-          scrolled
+        className={`navbar ${scrolled
             ? "scrolled"
             : ""
-        }`}
+          }`}
       >
 
         <div className="nav-container">
@@ -107,13 +106,13 @@ export default function Navbar() {
 
             <Link href={makeLink("")}>
 
-<Image
-  src="/humanlogo.png"
-  alt="logo"
-  width={140}
-  height={70}
-  priority
-/>
+              <Image
+                src="/humanlogo.png"
+                alt="logo"
+                width={140}
+                height={70}
+                priority
+              />
 
             </Link>
 
@@ -121,11 +120,10 @@ export default function Navbar() {
 
           {/* CENTER - MENU */}
           <div
-            className={`nav-links ${
-              open
+            className={`nav-links ${open
                 ? "active"
                 : ""
-            }`}
+              }`}
           >
 
             {/* HOME */}
@@ -133,7 +131,7 @@ export default function Navbar() {
               className={
                 pathname ===
                   makeLink("") ||
-                pathname === "/"
+                  pathname === "/"
                   ? "active"
                   : ""
               }
@@ -144,11 +142,11 @@ export default function Navbar() {
 
             {/* ABOUT */}
             <Link
-            className={
-              pathname.includes("/about")
-                ? "active"
-                : ""
-            }
+              className={
+                pathname.includes("/about")
+                  ? "active"
+                  : ""
+              }
               href={makeLink("/about")}
             >
               About
@@ -156,23 +154,23 @@ export default function Navbar() {
 
             {/* PRODUCTS */}
             <Link
-            className={
-              pathname.includes("/products")
-                ? "active"
-                : ""
-            }
-              href={makeLink("/products")}
+              className={
+                pathname.includes("/items")
+                  ? "active"
+                  : ""
+              }
+              href={makeLink("/items")}
             >
               Products
             </Link>
 
             {/* CONTACT */}
             <Link
-            className={
-              pathname.includes("/contact")
-                ? "active"
-                : ""
-            }
+              className={
+                pathname.includes("/contact")
+                  ? "active"
+                  : ""
+              }
               href={makeLink("/contact")}
             >
               Contact
