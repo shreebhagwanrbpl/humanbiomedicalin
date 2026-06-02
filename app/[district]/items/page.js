@@ -1,4 +1,4 @@
-import Products from "@/app/products/page";
+import ProductsList from "@/app/sections/items/ProductsList";
 
 export default async function Page({ params }) {
 
@@ -13,5 +13,5 @@ export default async function Page({ params }) {
       char.toUpperCase()
     );
 
-  return <Products city={city} />;
+  return <ProductsList city={city} />;
 }

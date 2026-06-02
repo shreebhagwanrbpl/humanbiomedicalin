@@ -94,8 +94,8 @@ export default function Navbar() {
     <>
       <nav
         className={`navbar ${scrolled
-            ? "scrolled"
-            : ""
+          ? "scrolled"
+          : ""
           }`}
       >
 
@@ -121,8 +121,8 @@ export default function Navbar() {
           {/* CENTER - MENU */}
           <div
             className={`nav-links ${open
-                ? "active"
-                : ""
+              ? "active"
+              : ""
               }`}
           >
 
