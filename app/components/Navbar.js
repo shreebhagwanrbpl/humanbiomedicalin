@@ -9,21 +9,20 @@ import "@/app/components/pages.css";
 import "./Navbar.css";
 
 export default function Navbar() {
-
   const [open, setOpen] =
     useState(false);
 
   const [scrolled, setScrolled] =
     useState(false);
 
-  const pathname = usePathname();
+  const pathname =
+    usePathname();
 
-  // current path
-  const pathParts = pathname
-    .split("/")
-    .filter(Boolean);
+  const pathParts =
+    pathname
+      .split("/")
+      .filter(Boolean);
 
-  // reserved routes
   const reservedRoutes = [
     "about",
     "contact",
@@ -33,49 +32,35 @@ export default function Navbar() {
     "get-in-touch",
   ];
 
-  // district slug
   const district =
     pathParts[0] &&
-      !reservedRoutes.includes(
-        pathParts[0]
-      )
+    !reservedRoutes.includes(
+      pathParts[0]
+    )
       ? pathParts[0]
       : "";
 
-  // dynamic links
   const makeLink = (
     path = ""
   ) => {
-
-    // no district
     if (!district) {
-
       return path || "/";
-
     }
 
-    // homepage
     if (!path) {
-
       return `/${district}`;
-
     }
 
-    // other pages
     return `/${district}${path}`;
-
   };
 
-  // scroll effect
   useEffect(() => {
-
-    const handleScroll = () => {
-
-      setScrolled(
-        window.scrollY > 50
-      );
-
-    };
+    const handleScroll =
+      () => {
+        setScrolled(
+          window.scrollY > 50
+        );
+      };
 
     window.addEventListener(
       "scroll",
@@ -87,133 +72,129 @@ export default function Navbar() {
         "scroll",
         handleScroll
       );
-
   }, []);
 
   return (
-    <>
-      <nav
-        className={`navbar ${scrolled
+    <nav
+      className={`navbar ${
+        scrolled
           ? "scrolled"
           : ""
-          }`}
-      >
+      }`}
+    >
+      <div className="nav-container">
 
-        <div className="nav-container">
-
-          {/* LEFT - LOGO */}
-          <div className="logo-box">
-
-            <Link href={makeLink("")}>
-
-              <Image
-                src="/humanlogo.png"
-                alt="logo"
-                width={140}
-                height={70}
-                priority
-              />
-
-            </Link>
-
-          </div>
-
-          {/* CENTER - MENU */}
-          <div
-            className={`nav-links ${open
-              ? "active"
-              : ""
-              }`}
+        {/* LOGO */}
+        <div className="logo-box">
+          <Link
+            href={makeLink("")}
           >
-
-            {/* HOME */}
-            <Link
-              className={
-                pathname ===
-                  makeLink("") ||
-                  pathname === "/"
-                  ? "active"
-                  : ""
-              }
-              href={makeLink("")}
-            >
-              Home
-            </Link>
-
-            {/* ABOUT */}
-            <Link
-              className={
-                pathname.includes("/about")
-                  ? "active"
-                  : ""
-              }
-              href={makeLink("/about")}
-            >
-              About
-            </Link>
-
-            {/* PRODUCTS */}
-            <Link
-              className={
-                pathname.includes("/items")
-                  ? "active"
-                  : ""
-              }
-              href={makeLink("/items")}
-            >
-              Products
-            </Link>
-
-            {/* CONTACT */}
-            <Link
-              className={
-                pathname.includes("/contact")
-                  ? "active"
-                  : ""
-              }
-              href={makeLink("/contact")}
-            >
-              Contact
-            </Link>
-
-          </div>
-
-          {/* RIGHT */}
-          {/* <div className="nav-right">
-
-            <Link
-              href={makeLink("/contact")}
-            >
-
-              <button className="quote-btn">
-                Get Quote
-              </button>
-
-            </Link>
-
-          
-            <div
-              className={`hamburger ${
-                open
-                  ? "open"
-                  : ""
-              }`}
-              onClick={() =>
-                setOpen(!open)
-              }
-            >
-
-              <span></span>
-              <span></span>
-              <span></span>
-
-            </div>
-
-          </div> */}
-
+            <Image
+              src="/humanlogo.png"
+              alt="logo"
+              width={140}
+              height={70}
+              priority
+            />
+          </Link>
         </div>
 
-      </nav>
-    </>
+        {/* NAV LINKS */}
+        <div
+          className={`nav-links ${
+            open
+              ? "active"
+              : ""
+          }`}
+        >
+          <Link
+            className={
+              pathname ===
+                makeLink("") ||
+              pathname === "/"
+                ? "active"
+                : ""
+            }
+            href={makeLink("")}
+            onClick={() =>
+              setOpen(false)
+            }
+          >
+            Home
+          </Link>
+
+          <Link
+            className={
+              pathname.includes(
+                "/about"
+              )
+                ? "active"
+                : ""
+            }
+            href={makeLink(
+              "/about"
+            )}
+            onClick={() =>
+              setOpen(false)
+            }
+          >
+            About
+          </Link>
+
+          <Link
+            className={
+              pathname.includes(
+                "/items"
+              )
+                ? "active"
+                : ""
+            }
+            href={makeLink(
+              "/items"
+            )}
+            onClick={() =>
+              setOpen(false)
+            }
+          >
+            Products
+          </Link>
+
+          <Link
+            className={
+              pathname.includes(
+                "/contact"
+              )
+                ? "active"
+                : ""
+            }
+            href={makeLink(
+              "/contact"
+            )}
+            onClick={() =>
+              setOpen(false)
+            }
+          >
+            Contact
+          </Link>
+        </div>
+
+        {/* HAMBURGER */}
+        <div
+          className={`hamburger ${
+            open
+              ? "open"
+              : ""
+          }`}
+          onClick={() =>
+            setOpen(!open)
+          }
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+      </div>
+    </nav>
   );
 }
