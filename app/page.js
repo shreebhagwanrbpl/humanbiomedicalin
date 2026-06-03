@@ -11,6 +11,8 @@ import Link from "next/link";
 import Image from "next/image";
 import "./globals.css";
 
+
+
 export default function Home({ city }) {
 
   const pathname = usePathname();
@@ -100,15 +102,10 @@ export default function Home({ city }) {
   const cityName =
     formatCity(currentCity);
   const [mounted, setMounted] = useState(false);
-
   const [counts, setCounts] = useState([0, 0, 0, 0]);
-
   const [animationData, setAnimationData] = useState(null);
-
   const [products, setProducts] = useState([]);
-
   const [services, setServices] = useState([]);
-
   const [data, setData] = useState({
     // title: "Premium Medical Equipment Collection",
     // description:
@@ -291,22 +288,29 @@ export default function Home({ city }) {
       {/* HERO */}
       <section className="hero-section d-flex align-items-center text-center">
         <div className="container">
-
-          <h1 className="hero-title">
+          {/* <h1 className="hero-title">
             {data.title}
             {" "}
             {isValidCity
               ? ` in ${cityName}`
-              : ""}
-          </h1>
+              : ""} 
+          </h1> */}
 
-          <p className="hero-desc mt-3">
+          {/* <p className="hero-desc mt-3">
             {data.description}
             {" "}
             {isValidCity
               ? ` available in ${cityName}`
               : ""}
-          </p>
+          </p> */}
+          <h1 className="text-dark">Laboratory Equipment Supplier in India</h1> 
+            <p>
+            Human Biomedical is a trusted supplier of laboratory equipment,
+            diagnostic instruments, pathology machines, hospital equipment,
+            biomedical products and scientific instruments across India.
+            We serve hospitals, laboratories, research institutes and healthcare
+            organizations with reliable and high-quality solutions.
+            </p>
 
           <div className="mt-4 d-flex justify-content-center gap-3 flex-wrap">
 

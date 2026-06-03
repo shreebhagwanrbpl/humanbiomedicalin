@@ -2,6 +2,41 @@ import "./globals.css";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
+
+
+export const metadata = {
+  title:
+    "Laboratory Equipment Supplier in India | Human Biomedical",
+
+  description:
+    "Human Biomedical is a trusted supplier of laboratory equipment, pathology machines, diagnostic instruments, biomedical products and hospital equipment across India.",
+
+  keywords: [
+    "laboratory equipment supplier",
+    "hospital equipment supplier",
+    "biomedical products",
+    "pathology machines",
+    "diagnostic instruments",
+    "medical equipment supplier india",
+    "human biomedical"
+  ],
+
+  alternates: {
+    canonical: "https://humanbiomedical.in",
+  },
+
+  openGraph: {
+    title:
+      "Laboratory Equipment Supplier in India | Human Biomedical",
+    description:
+      "Trusted supplier of laboratory equipment, pathology machines and biomedical products across India.",
+    url: "https://humanbiomedical.in",
+    siteName: "Human Biomedical",
+    type: "website",
+  },
+};
+
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">

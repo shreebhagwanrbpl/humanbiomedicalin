@@ -10,6 +10,64 @@ import "../items/product.css";
 import { doc, getDoc, addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Modal from "react-modal";
+
+
+
+export async function generateMetadata({ params }) {
+
+  const productName =
+    decodeURIComponent(params.slug)
+      .replace(/-/g, " ");
+
+  return {
+    title:"Laboratory Equipment, Diagnostic Instruments & Biomedical Products Supplier in India | Human Biomedical",
+   description:
+"Human Biomedical is a leading supplier of laboratory equipment, diagnostic instruments, pathology lab machines, hospital equipment and biomedical products across India. Get quality products at competitive prices.",
+
+twitter: {
+  card: "summary_large_image",
+  title:
+    "Laboratory Equipment Supplier in India | Human Biomedical",
+  description:
+    "Leading supplier of laboratory and biomedical equipment in India.",
+  images: [
+    "https://humanbiomedical.in/logo.png"
+  ]
+},
+    keywords: [
+      productName,
+      `${productName} supplier`,
+      `${productName} distributor`,
+      `${productName} price`,
+      `${productName} India`,
+      `${productName} Rajasthan`,
+      `${productName} Jaipur`,
+      "laboratory equipment",
+      "diagnostic equipment",
+      "pathology instruments",
+      "biomedical products",
+      "medical equipment supplier",
+      "hospital equipment",
+      "lab analyzer",
+      "human biomedical"
+    ],
+
+    alternates: {
+      canonical: `https://humanbiomedical.in/products/${params.slug}`
+    },
+
+    openGraph: {
+      title: `${productName} Supplier in India`,
+      description: `Buy ${productName} from Human Biomedical`,
+      url: `https://humanbiomedical.in/products/${params.slug}`,
+      siteName: "Human Biomedical",
+      type: "website"
+    }
+    
+  };
+}
+
+
 export default function ProductsList({ city }) {
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
@@ -244,15 +302,26 @@ export default function ProductsList({ city }) {
     return (
       <div className="page-loader">
         <div className="loader-circle"></div>
-
         <h2>Human Biomedical</h2>
-
         <p>Loading amazing healthcare solutions...</p>
       </div>
     );
   }
   return (
     <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Human Biomedical",
+          url: "https://humanbiomedical.in",
+          description:
+            "Laboratory Equipment Supplier in India", 
+        }),
+      }}
+    />
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -306,7 +375,7 @@ export default function ProductsList({ city }) {
                   <img
                     src={p.image || "/no-image.png"}
                     className="product-img"
-                    alt={p.title}
+                    alt={`${p.title} Supplier in India - Human Biomedical`}
                   />
                 </div>
 
