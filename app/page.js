@@ -21,26 +21,19 @@ export default function Home({ city }) {
     .filter(Boolean);
   // current city
   // const currentCity = city || "";
-  const [currentCity, setCurrentCity] =
-    useState("");
+  const [currentCity, setCurrentCity] = useState("");
+  const [isValidCity, setIsValidCity] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [isValidCity, setIsValidCity] =
-    useState(false);
-  const [loading, setLoading] =
-    useState(true);
+
   useEffect(() => {
-
     const checkDistrict =
       async () => {
-
         const slug =
           pathParts[0];
-
         if (!slug) {
-
           setCurrentCity("");
           setIsValidCity(false);
-
           return;
 
         }
@@ -126,11 +119,8 @@ export default function Home({ city }) {
   };
   // ✅ COUNTER
   useEffect(() => {
-
     const target = [500, 200, 15, 24];
-
     const interval = setInterval(() => {
-
       setCounts((prev) =>
         prev.map((val, i) =>
           val < target[i]
@@ -138,13 +128,10 @@ export default function Home({ city }) {
             : target[i]
         )
       );
-
     }, 50);
 
     setTimeout(() => clearInterval(interval), 2000);
-
     return () => clearInterval(interval);
-
   }, [pathname]);
 
   // ✅ FETCH PRODUCTS
