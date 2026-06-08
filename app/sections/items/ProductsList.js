@@ -20,20 +20,20 @@ export async function generateMetadata({ params }) {
       .replace(/-/g, " ");
 
   return {
-    title:"Laboratory Equipment, Diagnostic Instruments & Biomedical Products Supplier in India | Human Biomedical",
-   description:
-"Human Biomedical is a leading supplier of laboratory equipment, diagnostic instruments, pathology lab machines, hospital equipment and biomedical products across India. Get quality products at competitive prices.",
+    title: "Laboratory Equipment, Diagnostic Instruments & Biomedical Products Supplier in India | Human Biomedical",
+    description:
+      "Human Biomedical is a leading supplier of laboratory equipment, diagnostic instruments, pathology lab machines, hospital equipment and biomedical products across India. Get quality products at competitive prices.",
 
-twitter: {
-  card: "summary_large_image",
-  title:
-    "Laboratory Equipment Supplier in India | Human Biomedical",
-  description:
-    "Leading supplier of laboratory and biomedical equipment in India.",
-  images: [
-    "https://humanbiomedical.in/logo.png"
-  ]
-},
+    twitter: {
+      card: "summary_large_image",
+      title:
+        "Laboratory Equipment Supplier in India | Human Biomedical",
+      description:
+        "Leading supplier of laboratory and biomedical equipment in India.",
+      images: [
+        "https://humanbiomedical.in/logo.png"
+      ]
+    },
     keywords: [
       productName,
       `${productName} supplier`,
@@ -63,7 +63,7 @@ twitter: {
       siteName: "Human Biomedical",
       type: "website"
     }
-    
+
   };
 }
 
@@ -309,19 +309,19 @@ export default function ProductsList({ city }) {
   }
   return (
     <>
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "Human Biomedical",
-          url: "https://humanbiomedical.in",
-          description:
-            "Laboratory Equipment Supplier in India", 
-        }),
-      }}
-    />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Human Biomedical",
+            url: "https://humanbiomedical.in",
+            description:
+              "Laboratory Equipment Supplier in India",
+          }),
+        }}
+      />
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -385,31 +385,19 @@ export default function ProductsList({ city }) {
                   <p><b>Size:</b> {p.size || "-"}</p>
                   <p><b>Usage:</b> {p.usage || "-"}</p>
                 </div>
-
                 <button
                   className="btn btn-dark product-btn"
-
                   onClick={() => {
+                    const slug = makeSlug(p.title);
 
-                    setSelected(p);
-
-                    setActiveImg(p.image);
-
-                    setShowForm(false);
-
-                    window.history.replaceState(
-                      {},
-                      "",
+                    router.push(
                       isValidCity
-                        ? `/${citySlug}/items`
-                        : "/items"
+                        ? `/${citySlug}/items/${slug}`
+                        : `/items/${slug}`
                     );
-
                   }}
                 >
-
                   View
-
                 </button>
               </div>
 
@@ -484,185 +472,6 @@ export default function ProductsList({ city }) {
 
         </div>
 
-        {/* MODAL */}
-        <Modal
-          isOpen={!!selected}
-          onRequestClose={() => {
-
-            setSelected(null);
-
-            window.history.replaceState(
-              {},
-              "",
-              isValidCity
-                ? `/${citySlug}/items`
-                : "/items"
-            );
-
-          }}
-          className="react-modal-content"
-          overlayClassName="react-modal-overlay"
-        >
-
-          <button
-            className="close-btn"
-            onClick={() => {
-
-              setSelected(null);
-
-              window.history.replaceState(
-                {},
-                "",
-                isValidCity
-                  ? `/${citySlug}/items`
-                  : "/items"
-              );
-
-            }}
-          >
-            ✖
-          </button>
-
-          <div className="row align-items-center">
-
-            {/* LEFT */}
-            <div className="col-md-6">
-
-              <h3 className="fw-bold mb-3">
-                {selected?.title}
-              </h3>
-
-              <ul className="spec-list">
-
-                <li>
-                  <b>Capacity:</b>{" "}
-                  {selected?.capacity || "-"}
-                </li>
-
-                <li>
-                  <b>Brand:</b>{" "}
-                  {selected?.brand || "-"}
-                </li>
-
-                <li>
-                  <b>Model:</b>{" "}
-                  {selected?.model || "-"}
-                </li>
-
-                <li>
-                  <b>Usage:</b>{" "}
-                  {selected?.usage || "-"}
-                </li>
-
-                <li>
-                  <b>Automation:</b>{" "}
-                  {selected?.automation || "-"}
-                </li>
-
-                <li>
-                  <b>Availability:</b>{" "}
-                  {selected?.availability || "-"}
-                </li>
-
-              </ul>
-
-              <p className="text-muted mt-3">
-                {selected?.desc}
-              </p>
-
-            </div>
-
-            {/* RIGHT */}
-            <div className="col-md-6 text-center">
-
-              <img
-                src={activeImg || "/no-image.png"}
-                className="modal-img"
-                alt="product"
-              />
-
-              <div className="thumbs justify-content-center mt-3">
-
-                <img
-                  src={selected?.image || "/no-image.png"}
-                  className={`thumb ${activeImg === selected?.image
-                    ? "active"
-                    : ""
-                    }`}
-                  onClick={() =>
-                    setActiveImg(selected?.image)
-                  }
-                />
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* QUERY FORM */}
-          <div className="mt-4">
-
-
-
-            <button
-              className="btn btn-dark w-100"
-              onClick={() => setQueryModal(true)}
-            >
-              Get Details
-            </button>
-
-            <Modal
-              isOpen={queryModal}
-              onRequestClose={() => setQueryModal(false)}
-              className="react-modal-content small-modal"
-              overlayClassName="react-modal-overlay"
-            >
-
-              <button
-                className="close-btn"
-                onClick={() => setQueryModal(false)}
-              >
-                ✖
-              </button>
-
-              <h3 className="mb-4 text-center">
-                Product Query
-              </h3>
-
-              <input
-                type="email"
-                name="email"
-                placeholder="Your Email"
-                className="form-control mb-3"
-                value={queryForm.email}
-                onChange={handleFormChange}
-              />
-
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Phone Number"
-                className="form-control mb-3"
-                value={queryForm.phone}
-                onChange={handleFormChange}
-              />
-
-              <button
-                className="btn btn-dark w-100"
-                onClick={async () => {
-                  await handleSubmitQuery();
-                  setQueryModal(false);
-                }}
-              >
-                Submit Query
-              </button>
-
-            </Modal>
-
-          </div>
-
-        </Modal>
 
       </div>
     </>

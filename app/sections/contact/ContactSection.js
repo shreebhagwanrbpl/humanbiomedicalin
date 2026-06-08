@@ -5,28 +5,28 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { db } from "@/lib/firebase";
 
-import { doc,getDoc,collection,addDoc,} from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, } from "firebase/firestore";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 export default function ContactSection({ city }) {
-const pathname = usePathname();
+  const pathname = usePathname();
 
-const pathParts = pathname
-  .split("/")
-  .filter(Boolean);
+  const pathParts = pathname
+    .split("/")
+    .filter(Boolean);
 
-const [currentCity, setCurrentCity] =
-  useState("");
+  const [currentCity, setCurrentCity] =
+    useState("");
 
-const [isValidCity, setIsValidCity] =
-  useState(false);
+  const [isValidCity, setIsValidCity] =
+    useState(false);
   const [contactInfo, setContactInfo] =
     useState([]);
 
   const [loading, setLoading] =
     useState(true);
-const [mounted, setMounted] =
-  useState(false);
+  const [mounted, setMounted] =
+    useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -36,8 +36,8 @@ const [mounted, setMounted] =
 
   // current city
   // const currentCity = city || "jaipur";
-const [stateName, setStateName] =
-  useState("");
+  const [stateName, setStateName] =
+    useState("");
   // format city
   const formatCity = (name = "") =>
     name
@@ -55,75 +55,75 @@ const [stateName, setStateName] =
 
   const cityName =
     formatCity(currentCity);
-    useEffect(() => {
-  setMounted(true);
-}, []);
-useEffect(() => {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  useEffect(() => {
 
-  const checkDistrict =
-    async () => {
+    const checkDistrict =
+      async () => {
 
-  const slug =
-  pathParts[0];
+        const slug =
+          pathParts[0];
 
-setStateName("");
+        setStateName("");
 
-      // no slug
-      if (!slug) {
+        // no slug
+        if (!slug) {
 
-        setCurrentCity("");
-        setIsValidCity(false);
+          setCurrentCity("");
+          setIsValidCity(false);
 
-        return;
+          return;
 
-      }
+        }
 
-      try {
+        try {
 
-        const snap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "districts",
-            slug
-          )
-        );
+          const snap = await getDoc(
+            doc(
+              db,
+              "websites",
+              "humanbiomedicalin",
+              "districts",
+              slug
+            )
+          );
 
-        // valid city
-    if (snap.exists()) {
+          // valid city
+          if (snap.exists()) {
 
-  const data =
-    snap.data();
+            const data =
+              snap.data();
 
-  setCurrentCity(slug);
+            setCurrentCity(slug);
 
-  setStateName(
-    data?.state || ""
-  );
+            setStateName(
+              data?.state || ""
+            );
 
-  setIsValidCity(true);
+            setIsValidCity(true);
 
-} else {
+          } else {
 
-          // invalid city
+            // invalid city
+            setCurrentCity("");
+            setIsValidCity(false);
+
+          }
+
+        } catch {
+
           setCurrentCity("");
           setIsValidCity(false);
 
         }
 
-      } catch {
+      };
 
-        setCurrentCity("");
-        setIsValidCity(false);
+    checkDistrict();
 
-      }
-
-    };
-
-  checkDistrict();
-
-}, [pathname]);
+  }, [pathname]);
   // LOAD CONTACT INFO
   useEffect(() => {
 
@@ -177,57 +177,88 @@ setStateName("");
   };
 
   // SUBMIT
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  e.preventDefault();
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+    const message = form.message.trim();
 
-  // EMPTY FIELD VALIDATION
-  if (
-    !form.name.trim() ||
-    !form.email.trim() ||
-    !form.phone.trim() ||
-    !form.message.trim()
-  ) {
+    // Empty validation
+    if (!name || !email || !phone || !message) {
+      return toast.error("Please fill all fields");
+    }
 
-    toast.error("Please fill all fields");
-    return;
+    // Name validation
+    if (name.length < 2) {
+      return toast.error(
+        "Please enter a valid name"
+      );
+    }
 
-  }
+    // Email validation
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  try {
+    if (!emailRegex.test(email)) {
+      return toast.error(
+        "Please enter a valid email address"
+      );
+    }
 
-    await addDoc(
-      collection(
-        db,
-        "websitesQueries",
-        "humanbiomedicalin",
-        "contactQueries"
-      ),
-      {
-        ...form,
-        city: cityName,
-        createdAt: new Date(),
-      }
-    );
+    // Phone validation
+    const phoneRegex =
+      /^[6-9]\d{9}$/;
 
-    toast.success("Message Sent Successfully");
+    if (!phoneRegex.test(phone)) {
+      return toast.error(
+        "Please enter a valid 10 digit mobile number"
+      );
+    }
 
-    setForm({
-      name: "",
-      email: "",
-      phone: "",
-      message: "",
-    });
+    // Message validation
+    if (message.length < 10) {
+      return toast.error(
+        "Message must be at least 10 characters"
+      );
+    }
 
-  } catch (err) {
+    try {
+      await addDoc(
+        collection(
+          db,
+          "websitesQueries",
+          "humanbiomedicalin",
+          "contactQueries"
+        ),
+        {
+          name,
+          email,
+          phone,
+          message,
+          city: cityName,
+          createdAt: new Date(),
+        }
+      );
 
-    console.log(err);
+      toast.success(
+        "Message Sent Successfully"
+      );
 
-    toast.error("Failed to send message");
-
-  }
-
-};
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
+    } catch (err) {
+      console.log(err);
+      toast.error(
+        "Failed to send message"
+      );
+    }
+  };
 
   // HELPERS
   const getValue = (key) => {
@@ -250,227 +281,230 @@ const handleSubmit = async (e) => {
     );
 
   };
-if (!mounted || loading) {
-  return (
-    <div className="page-loader">
-      <div className="loader-circle"></div>
+  if (!mounted || loading) {
+    return (
+      <div className="page-loader">
+        <div className="loader-circle"></div>
 
-      <h2>Human Biomedical</h2>
+        <h2>Human Biomedical</h2>
 
-      <p>Loading amazing healthcare solutions...</p>
-    </div>
-  );
-}
+        <p>Loading amazing healthcare solutions...</p>
+      </div>
+    );
+  }
   return (
     <><Toaster position="top-right" reverseOrder={false} />
-    <div>
+      <div>
 
-  {/* baaki code */}
-      {/* HERO */}
-      <section className="contact-hero text-center">
+        {/* baaki code */}
+        {/* HERO */}
+        <section className="contact-hero text-center">
 
-        <div className="container">
+          <div className="container">
 
-          <h1>
-            Contact Us
-            {" "}
-         {isValidCity
-  ? ` in ${cityName}`
-  : ""}
-          </h1>
+            <h1>
+              Contact Us
+              {" "}
+              {isValidCity
+                ? ` in ${cityName}`
+                : ""}
+            </h1>
 
-          <p>
+            <p>
 
-            We’re here to help you
-            with all your medical
-            equipment needs
+              We’re here to help you
+              with all your medical
+              equipment needs
 
-            {" "}
+              {" "}
 
- {isValidCity
-  ? ` in ${cityName}`
-  : ""}
+              {isValidCity
+                ? ` in ${cityName}`
+                : ""}
 
-          </p>
-
-        </div>
-
-      </section>
-
-      {/* CONTACT INFO */}
-      <section className="container py-5">
-
-        <div className="row g-4">
-
-          {/* LOCATION */}
-          <div className="col-md-4">
-
-<div className="contact-card">
-
-  <h5>📍 Location</h5>
-
-  <p>
-
-{loading
-  ? "Loading..."
-  : isValidCity
-    ? `${cityName}, ${stateName}, India`
-    : getValue("address")}
-  </p>
-
-</div>
+            </p>
 
           </div>
 
-          {/* PHONE */}
-          <div className="col-md-4">
+        </section>
 
-            <div className="contact-card">
+        {/* CONTACT INFO */}
+        <section className="container py-5">
 
-              <h5>📞 Phone</h5>
+          <div className="row g-4">
 
-              <p>
+            {/* LOCATION */}
+            <div className="col-md-4">
 
-                {loading
-                  ? "Loading..."
-                  : getValue(
+              <div className="contact-card">
+
+                <h5>📍 Location</h5>
+
+                <p>
+
+                  {loading
+                    ? "Loading..."
+                    : isValidCity
+                      ? `${cityName}, ${stateName}, India`
+                      : getValue("address")}
+                </p>
+
+              </div>
+
+            </div>
+
+            {/* PHONE */}
+            <div className="col-md-4">
+
+              <div className="contact-card">
+
+                <h5>📞 Phone</h5>
+
+                <p>
+
+                  {loading
+                    ? "Loading..."
+                    : getValue(
                       "phone"
                     )}
 
-              </p>
+                </p>
+
+              </div>
 
             </div>
 
-          </div>
+            {/* EMAIL */}
+            <div className="col-md-4">
 
-          {/* EMAIL */}
-          <div className="col-md-4">
+              <div className="contact-card">
 
-            <div className="contact-card">
+                <h5>✉ Email</h5>
 
-              <h5>✉ Email</h5>
+                <p>
 
-              <p>
-
-                {loading
-                  ? "Loading..."
-                  : getValue(
+                  {loading
+                    ? "Loading..."
+                    : getValue(
                       "email"
                     )}
 
-              </p>
+                </p>
+
+              </div>
 
             </div>
 
           </div>
 
-        </div>
+        </section>
 
-      </section>
+        {/* MAP + FORM */}
+        <section className="container py-5">
 
-      {/* MAP + FORM */}
-      <section className="container py-5">
+          <div className="row g-5">
 
-        <div className="row g-5">
+            {/* MAP */}
+            <div className="col-md-6">
 
-          {/* MAP */}
-          <div className="col-md-6">
+              <iframe
+                src={`https://maps.google.com/maps?q=${cityName},India&output=embed`}
+                width="100%"
+                height="350"
+                style={{
+                  border: 0,
+                  borderRadius: "16px"
+                }}
+                loading="lazy"
+              />
 
-            <iframe
-              src={`https://maps.google.com/maps?q=${cityName},India&output=embed`}
-              width="100%"
-              height="350"
-              style={{
-                border: 0,
-                borderRadius: "16px"
-              }}
-              loading="lazy"
-            />
+            </div>
 
-          </div>
+            {/* FORM */}
+            <div className="col-md-6">
 
-          {/* FORM */}
-          <div className="col-md-6">
+              <div className="contact-form">
 
-            <div className="contact-form">
+                <h4 className="mb-3">
+                  Send a Message
+                </h4>
 
-              <h4 className="mb-3">
-                Send a Message
-              </h4>
-
-              <form
-                onSubmit={
-                  handleSubmit
-                }
-              >
-
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Your Name"
-                  className="form-control mb-3"
-                  value={form.name}
-                  onChange={
-                    handleChange
+                <form
+                  onSubmit={
+                    handleSubmit
                   }
-                  required
-                />
+                >
 
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Your Email"
-                  className="form-control mb-3"
-                  value={form.email}
-                  onChange={
-                    handleChange
-                  }
-                  required
-                />
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Your Name"
+                    className="form-control mb-3"
+                    value={form.name}
+                    onChange={
+                      handleChange
+                    }
+                    required
+                  />
 
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Your Number"
-                  className="form-control mb-3"
-                  value={form.phone}
-                  onChange={
-                    handleChange
-                  }
-                  required
-                  pattern="[0-9]{10}"
-                  maxLength={10}
-                />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Your Email"
+                    className="form-control mb-3"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                  />
 
-                <textarea
-                  name="message"
-                  placeholder="Your Message"
-                  className="form-control mb-3"
-                  rows="4"
-                  value={form.message}
-                  onChange={
-                    handleChange
-                  }
-                  required
-                ></textarea>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Your Number"
+                    className="form-control mb-3"
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        phone: e.target.value.replace(
+                          /\D/g,
+                          ""
+                        ),
+                      })
+                    }
+                    required
+                    maxLength={10}
+                  />
 
-                <button className="btn btn-dark w-100">
+                  <textarea
+                    name="message"
+                    placeholder="Your Message"
+                    className="form-control mb-3"
+                    rows="4"
+                    value={form.message}
+                    onChange={
+                      handleChange
+                    }
+                    required
+                  ></textarea>
 
-                  Send Message
+                  <button className="btn btn-dark w-100">
 
-                </button>
+                    Send Message
 
-              </form>
+                  </button>
+
+                </form>
+
+              </div>
 
             </div>
 
           </div>
 
-        </div>
+        </section>
 
-      </section>
-
-    </div>
+      </div>
     </>
   );
 }
