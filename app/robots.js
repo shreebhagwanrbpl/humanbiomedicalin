@@ -8,3 +8,5 @@ export default function robots() {
       "https://humanbiomedical.in/sitemap.xml",
   };
 }
+
+
