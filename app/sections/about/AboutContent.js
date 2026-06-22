@@ -2,62 +2,77 @@
 import { useEffect, useState } from "react";
 import "./about.css"
 export default function AboutSection() {
-const [mounted, setMounted] = useState(false);
-const [loading, setLoading] = useState(true);
-useEffect(() => {
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
 
-  setLoading(true);
+    setLoading(true);
 
-  const items =
-    document.querySelectorAll(".fade-up");
+    const items =
+      document.querySelectorAll(".fade-up");
 
-  items.forEach((el, i) => {
+    items.forEach((el, i) => {
 
-    el.classList.remove("active");
+      el.classList.remove("active");
 
-    setTimeout(() => {
-      el.classList.add("active");
-    }, i * 150);
+      setTimeout(() => {
+        el.classList.add("active");
+      }, i * 150);
 
-  });
+    });
 
-  const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
 
-    setMounted(true);
+      setMounted(true);
 
-    setLoading(false);
+      setLoading(false);
 
-  }, 600);
+    }, 600);
 
-  return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
 
-}, []);
+  }, []);
   if (!mounted || loading) {
 
     return (
-<div className="page-loader">
-  <div className="loader-circle"></div>
+      <div className="page-loader">
+        <div className="loader-circle"></div>
 
-  <h2>Human Biomedical</h2>
+        <h2>Human Biomedical</h2>
 
-  <p>Loading amazing healthcare solutions...</p>
-</div>
+        <p>Loading amazing healthcare solutions...</p>
+      </div>
     );
 
   }
   return (
     <div className="about-page">
       {/* HERO */}
-     <section className="about-hero">
-        <div className="container text-center hero-inner">
-            <h1 className="hero-title">
-            About <span>Human Biomedical</span>
-            </h1>
-            <p className="hero-subtitle">
-            Delivering advanced medical solutions with precision, trust, and innovation.
-            </p>
+      <section className="about-hero">
+
+        <div className="container">
+
+          <span className="about-badge">
+            About Us
+          </span>
+
+          <h1 className="about-title">
+            <span className="black-text">
+              Where Technology
+            </span>{" "}
+            <span className="red-text">
+              Meets Healthcare
+            </span>
+          </h1>
+
+          <p className="about-subtitle">
+            Delivering advanced medical solutions with
+            precision, trust and innovation across India.
+          </p>
+
         </div>
-        </section>
+
+      </section>
 
       {/* ABOUT */}
       <section className="container py-5">
@@ -65,7 +80,7 @@ useEffect(() => {
 
           <div className="col-md-6 fade-up">
             <img
-              src="https://images.unsplash.com/photo-1581093588401-12cddbe33a9c"
+              src="/about-human.png"
               className="img-fluid about-img"
               alt="about"
             />

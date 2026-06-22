@@ -15,7 +15,7 @@ export default function ItemDetailPage() {
     const { slug } = useParams();
 
     const [product, setProduct] = useState(null);
-
+    const [loading, setLoading] = useState(true);
     const [form, setForm] = useState({
         email: "",
         phone: "",
@@ -27,9 +27,10 @@ export default function ItemDetailPage() {
             .trim()
             .replace(/[^a-z0-9\s-]/g, "")
             .replace(/\s+/g, "-");
-
     useEffect(() => {
         const fetchProduct = async () => {
+            const start = Date.now();
+
             try {
                 const snap = await getDoc(
                     doc(
@@ -41,19 +42,29 @@ export default function ItemDetailPage() {
                     )
                 );
 
-                if (!snap.exists()) return;
+                if (snap.exists()) {
+                    const products =
+                        snap.data().products || [];
 
-                const products =
-                    snap.data().products || [];
+                    const found = products.find(
+                        (item) =>
+                            makeSlug(item.title) === slug
+                    );
 
-                const found = products.find(
-                    (item) =>
-                        makeSlug(item.title) === slug
-                );
-
-                setProduct(found || null);
+                    setProduct(found || null);
+                }
             } catch (err) {
                 console.log(err);
+            } finally {
+                const elapsed =
+                    Date.now() - start;
+
+                const remaining =
+                    Math.max(1500 - elapsed, 0);
+
+                setTimeout(() => {
+                    setLoading(false);
+                }, remaining);
             }
         };
 
@@ -120,6 +131,127 @@ export default function ItemDetailPage() {
         }
     };
 
+    if (loading) {
+        return (
+            <>
+                <div
+                    className="product-loader"
+                    style={{
+                        minHeight: "calc(100vh + 200px)"
+                    }}
+                >
+
+                    <div className="loader-left">
+
+                        <div className="skeleton skeleton-title"></div>
+
+                        <div className="skeleton skeleton-text"></div>
+                        <div className="skeleton skeleton-text"></div>
+                        <div className="skeleton skeleton-text short"></div>
+
+                        <div className="skeleton skeleton-card"></div>
+
+                        <div className="skeleton skeleton-input"></div>
+                        <div className="skeleton skeleton-input"></div>
+
+                        <div className="skeleton skeleton-btn"></div>
+
+                    </div>
+
+                    <div className="loader-right">
+                        <div className="skeleton skeleton-image"></div>
+                    </div>
+
+                </div>
+
+                <style jsx>{`
+.product-loader{
+    min-height: 100vh;
+
+    padding-top: 120px;
+    box-sizing: border-box;
+
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:50px;
+    align-items:center;
+
+    padding-left:5%;
+    padding-right:5%;
+}
+
+                .skeleton{
+                    border-radius:12px;
+                    background: linear-gradient(
+                        90deg,
+                        #f0f0f0 25%,
+                        #e0e0e0 37%,
+                        #f0f0f0 63%
+                    );
+
+                    background-size:400% 100%;
+                    animation:amazonLoader 1.4s ease infinite;
+                }
+
+                @keyframes amazonLoader{
+                    0%{
+                        background-position:100% 50%;
+                    }
+                    100%{
+                        background-position:0 50%;
+                    }
+                }
+
+                .skeleton-title{
+                    height:60px;
+                    margin-bottom:25px;
+                }
+
+                .skeleton-text{
+                    height:18px;
+                    margin-bottom:12px;
+                }
+
+                .skeleton-text.short{
+                    width:70%;
+                }
+
+                .skeleton-card{
+                    height:220px;
+                    margin:30px 0;
+                }
+
+                .skeleton-input{
+                    height:50px;
+                    margin-bottom:15px;
+                }
+
+                .skeleton-btn{
+                    height:50px;
+                    width:180px;
+                }
+
+                .skeleton-image{
+                    width:100%;
+                    height:500px;
+                    border-radius:25px;
+                }
+
+                @media(max-width:768px){
+                    .product-loader{
+                        grid-template-columns:1fr;
+                        padding:20px;
+                    }
+
+                    .skeleton-image{
+                        height:320px;
+                    }
+                }
+            `}</style>
+            </>
+        );
+    }
+
     if (!product) {
         return (
             <div
@@ -127,18 +259,16 @@ export default function ItemDetailPage() {
                     minHeight: "100vh",
                     display: "flex",
                     justifyContent: "center",
-                    alignItems: "center",
-                    fontSize: "22px",
-                    fontWeight: "600",
+                    alignItems: "center"
                 }}
             >
-                Loading...
+                Product Not Found
             </div>
         );
     }
-
     return (
         <>
+
             <Toaster position="top-right" />
 
             <div className="container py-5 mt-5">
@@ -151,22 +281,27 @@ export default function ItemDetailPage() {
                         <div
                             style={{
                                 background: "#fff",
-                                borderRadius: "20px",
-                                padding: "25px",
+                                borderRadius: "24px",
+                                padding: "40px",
                                 boxShadow:
-                                    "0 10px 30px rgba(0,0,0,.08)",
+                                    "0 20px 50px rgba(0,0,0,.08)",
+                                border: "1px solid #eee",
+                                minHeight: "650px",
+
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                             }}
                         >
                             <img
-                                src={
-                                    product.image ||
-                                    "/no-image.png"
-                                }
-                                alt={product.title}
+                                src={product?.image || "/no-image.png"}
+                                alt={product?.title || "Product"}
                                 className="img-fluid"
                                 style={{
-                                    maxHeight: "450px",
+                                    maxHeight: "550px",
+                                    width: "100%",
                                     objectFit: "contain",
+                                    transition: "0.4s ease",
                                 }}
                             />
                         </div>
@@ -278,6 +413,7 @@ export default function ItemDetailPage() {
                 </div>
 
             </div>
+
         </>
     );
 }

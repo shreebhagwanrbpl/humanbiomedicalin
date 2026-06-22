@@ -1,5 +1,5 @@
 "use client";
-
+import Hero from "./components/Hero";
 // import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -23,7 +23,7 @@ export default function Home({ city }) {
   // const currentCity = city || "";
   const [currentCity, setCurrentCity] = useState("");
   const [isValidCity, setIsValidCity] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [cityLoading, setCityLoading] = useState(true);
 
 
   useEffect(() => {
@@ -34,8 +34,8 @@ export default function Home({ city }) {
         if (!slug) {
           setCurrentCity("");
           setIsValidCity(false);
+          setCityLoading(false);
           return;
-
         }
 
         try {
@@ -63,11 +63,12 @@ export default function Home({ city }) {
             setIsValidCity(false);
 
           }
-
+          setCityLoading(false);
         } catch {
 
           setCurrentCity("");
           setIsValidCity(false);
+          setCityLoading(false);
 
         }
 
@@ -99,16 +100,9 @@ export default function Home({ city }) {
   const [animationData, setAnimationData] = useState(null);
   const [products, setProducts] = useState([]);
   const [services, setServices] = useState([]);
-  const [data, setData] = useState({
-    // title: "Premium Medical Equipment Collection",
-    // description:
-    //   "High-quality diagnostic machines designed for precision & performance.",
-    // button1Text: "Explore Products",
-    // button2Text: "Get Quote",
-  });
-  const [homeLoading, setHomeLoading] =
-    useState(true);
-  // ✅ FIX BLANK PAGE AFTER NAVIGATION
+  const [data, setData] = useState({});
+  const [loading, setLoading] = useState(true);
+  //  FIX BLANK PAGE AFTER NAVIGATION
   useEffect(() => {
     setMounted(true);
     window.scrollTo(0, 0);
@@ -117,7 +111,7 @@ export default function Home({ city }) {
     if (!citySlug) return path || "/";
     return `/${citySlug}${path}`;
   };
-  // ✅ COUNTER
+  // COUNTER
   useEffect(() => {
     const target = [500, 200, 15, 24];
     const interval = setInterval(() => {
@@ -134,7 +128,7 @@ export default function Home({ city }) {
     return () => clearInterval(interval);
   }, [pathname]);
 
-  // ✅ FETCH PRODUCTS
+  // FETCH PRODUCTS
   useEffect(() => {
 
     const fetchProducts = async () => {
@@ -175,7 +169,7 @@ export default function Home({ city }) {
 
   const icons = ["🧪", "💊", "⚙️", "🔧", "🌍", "📊"];
 
-  // ✅ SERVICES
+  //  SERVICES
   useEffect(() => {
 
     const unsub = onSnapshot(
@@ -199,7 +193,7 @@ export default function Home({ city }) {
 
   }, [pathname]);
 
-  // ✅ HOME DATA
+  // HOME DATA
   useEffect(() => {
 
     const unsub = onSnapshot(
@@ -216,7 +210,9 @@ export default function Home({ city }) {
           setData(docSnap.data());
         }
 
-        setHomeLoading(false);
+        setLoading(false);
+
+
 
       }
     );
@@ -224,40 +220,7 @@ export default function Home({ city }) {
     return () => unsub();
 
   }, [pathname]);
-
-  // ✅ ANIMATION FIX
-  useEffect(() => {
-
-    setLoading(true);
-
-    const items =
-      document.querySelectorAll(".fade-up");
-
-    items.forEach((el, i) => {
-
-      el.classList.remove("active");
-
-      setTimeout(() => {
-        el.classList.add("active");
-      }, i * 150);
-
-    });
-
-    const timer = setTimeout(() => {
-
-      setMounted(true);
-
-      setLoading(false);
-
-    }, 500);
-
-    return () => clearTimeout(timer);
-
-  }, [pathname]);
-
-  // ✅ PREVENT BLANK PAGE
-  if (!mounted || homeLoading || loading) {
-
+  if (loading || cityLoading) {
     return (
       <div className="page-loader">
         <div className="loader-circle"></div>
@@ -267,66 +230,18 @@ export default function Home({ city }) {
         <p>Loading amazing healthcare solutions...</p>
       </div>
     );
-
   }
   return (
-    <div className="text-white">
+    <div>
 
-      {/* HERO */}
-      <section className="hero-section d-flex align-items-center text-center">
-        <div className="container">
-          {/* <h1 className="hero-title">
-            {data.title}
-            {" "}
-            {isValidCity
-              ? ` in ${cityName}`
-              : ""} 
-          </h1> */}
+      <Hero
+        data={data}
+        isValidCity={isValidCity}
+        cityName={cityName}
+        citySlug={citySlug}
+      />
 
-          {/* <p className="hero-desc mt-3">
-            {data.description}
-            {" "}
-            {isValidCity
-              ? ` available in ${cityName}`
-              : ""}
-          </p> */}
-          <h1 className="text-dark">Laboratory Equipment Supplier in India</h1> 
-            <p>
-            Human Biomedical is a trusted supplier of laboratory equipment,
-            diagnostic instruments, pathology machines, hospital equipment,
-            biomedical products and scientific instruments across India.
-            We serve hospitals, laboratories, research institutes and healthcare
-            organizations with reliable and high-quality solutions.
-            </p>
-
-          <div className="mt-4 d-flex justify-content-center gap-3 flex-wrap">
-
-            <Link href={
-              isValidCity
-                ? `/${citySlug}/items`
-                : "/items"
-            }>
-              <button className="btn btn-dark px-4">
-                {data.button1Text}
-              </button>
-            </Link>
-
-            <Link href={
-              isValidCity
-                ? `/${citySlug}/contact`
-                : "/contact"
-            }>
-              <button className="btn btn-outline-dark px-4">
-                {data.button2Text}
-              </button>
-            </Link>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* 📊 STATS SECTION */}
+      {/*  STATS SECTION */}
       <section className="stats-section text-center">
 
         <div className="container">
@@ -367,7 +282,7 @@ export default function Home({ city }) {
 
       </section>
 
-      {/* 🔥 SERVICES CARDS */}
+      {/*  SERVICES CARDS */}
       <section className="services-section">
 
         <div className="container">
@@ -408,7 +323,7 @@ export default function Home({ city }) {
 
       </section>
 
-      {/* 🔥 FEATURED PRODUCTS */}
+      {/*  FEATURED PRODUCTS */}
       <section className="products-section fade-up">
 
         <div className="container text-center">
@@ -432,7 +347,7 @@ export default function Home({ city }) {
 
                 <div className="product-card h-100">
 
-                  {/* ✅ IMAGE FIX */}
+                  {/*  IMAGE FIX */}
                   <div className="product-img-wrapper">
 
                     <img
@@ -454,7 +369,7 @@ export default function Home({ city }) {
                       {item.desc?.slice(0, 50)}...
                     </p>
 
-                    <Link href={`/${citySlug}/items`}>
+                    <Link href={makeLink("/items")}>
 
                       <button className="btn product-btn w-100 view-btn">
                         View Details
@@ -484,18 +399,17 @@ export default function Home({ city }) {
 
       </section>
 
-      {/* 🔥 ABOUT SECTION */}
+      {/*  ABOUT SECTION */}
       <section className="py-5 text-white">
 
         <div className="container">
 
           <div className="row align-items-center">
 
-            {/* LEFT IMAGE */}
             <div className="col-md-6 mb-4 mb-md-0">
 
               <img
-                src="https://images.unsplash.com/photo-1581093458791-9d3c2c54b4e3"
+                src="/about.png"
                 className="img-fluid rounded shadow"
                 alt="About"
               />
@@ -546,7 +460,7 @@ export default function Home({ city }) {
 
       </section>
 
-      {/* 🔥 CTA SECTION */}
+      {/*  CTA SECTION */}
       <section className="cta-section text-center">
 
         <div className="container">
@@ -576,7 +490,7 @@ export default function Home({ city }) {
 
       </section>
 
-      {/* 🔥 TESTIMONIALS SECTION */}
+      {/*  TESTIMONIALS SECTION */}
       <section className="testimonial-section">
 
         <div className="container text-center">

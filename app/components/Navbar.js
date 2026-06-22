@@ -34,9 +34,9 @@ export default function Navbar() {
 
   const district =
     pathParts[0] &&
-    !reservedRoutes.includes(
-      pathParts[0]
-    )
+      !reservedRoutes.includes(
+        pathParts[0]
+      )
       ? pathParts[0]
       : "";
 
@@ -76,11 +76,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`navbar ${
-        scrolled
-          ? "scrolled"
-          : ""
-      }`}
+      className={`navbar ${scrolled
+        ? "scrolled"
+        : ""
+        }`}
     >
       <div className="nav-container">
 
@@ -101,17 +100,16 @@ export default function Navbar() {
 
         {/* NAV LINKS */}
         <div
-          className={`nav-links ${
-            open
-              ? "active"
-              : ""
-          }`}
+          className={`nav-links ${open
+            ? "active"
+            : ""
+            }`}
         >
           <Link
             className={
               pathname ===
                 makeLink("") ||
-              pathname === "/"
+                pathname === "/"
                 ? "active"
                 : ""
             }
@@ -180,11 +178,10 @@ export default function Navbar() {
 
         {/* HAMBURGER */}
         <div
-          className={`hamburger ${
-            open
-              ? "open"
-              : ""
-          }`}
+          className={`hamburger ${open
+            ? "open"
+            : ""
+            }`}
           onClick={() =>
             setOpen(!open)
           }
