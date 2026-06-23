@@ -5,8 +5,15 @@ import Footer from "@/app/components/Footer";
 
 
 export const metadata = {
-  title:
+  metadataBase: new URL("https://humanbiomedical.in"),
+title: {
+  default:
     "Laboratory Equipment Supplier in India | Human Biomedical",
+
+  template:
+    "%s | Human Biomedical",
+},
+
 
   description:
     "Human Biomedical is a trusted supplier of laboratory equipment, pathology machines, diagnostic instruments, biomedical products and hospital equipment across India.",
@@ -20,6 +27,15 @@ export const metadata = {
     "medical equipment supplier india",
     "human biomedical"
   ],
+
+  robots: {
+  index: true,
+  follow: true,
+  googleBot: {
+    index: true,
+    follow: true,
+  },
+},
 
   alternates: {
     canonical: "https://humanbiomedical.in",

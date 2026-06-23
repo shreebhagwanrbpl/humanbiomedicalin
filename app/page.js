@@ -410,31 +410,22 @@ export default function Home({ city }) {
 
       {/* 🔥 FEATURED PRODUCTS */}
       <section className="products-section fade-up">
-
         <div className="container text-center">
-
           <h6 className="section-subtitle">
             Our Products
           </h6>
-
           <h2 className="section-title mb-5">
             Featured Products
           </h2>
-
           <div className="row">
-
             {products.map((item, i) => (
-
               <div
                 className="col-lg-3 col-md-6 mb-4"
                 key={i}
               >
-
                 <div className="product-card h-100">
-
                   {/* ✅ IMAGE FIX */}
                   <div className="product-img-wrapper">
-
                     <img
                       src={
                         item.image ||
@@ -443,35 +434,24 @@ export default function Home({ city }) {
                       className="product-img"
                       alt={item.title}
                     />
-
                   </div>
 
                   <div className="product-content">
-
                     <h6>{item.title}</h6>
-
                     <p>
                       {item.desc?.slice(0, 50)}...
                     </p>
-
                     <Link href={`/${citySlug}/items`}>
-
                       <button className="btn product-btn w-100 view-btn">
                         View Details
                       </button>
-
                     </Link>
-
                   </div>
-
                 </div>
-
               </div>
-
             ))}
-
           </div>
-
+          
           <div className="mt-4">
 
             {/* <button className="btn product-btn-main px-4">
