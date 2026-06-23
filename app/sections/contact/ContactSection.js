@@ -302,26 +302,25 @@ export default function ContactSection({ city }) {
 
           <div className="container">
 
-            <h1>
-              Contact Us
-              {" "}
-              {isValidCity
-                ? ` in ${cityName}`
-                : ""}
+            <div className="contact-badge">
+              Get In Touch
+            </div>
+
+            <h1 className="contact-title">
+              Contact <span>Experts</span>
+
+              {isValidCity && (
+                <> in {cityName}</>
+              )}
             </h1>
 
-            <p>
+            <p className="contact-subtitle">
+              Get expert assistance for laboratory,
+              diagnostic and medical equipment solutions
 
-              We’re here to help you
-              with all your medical
-              equipment needs
-
-              {" "}
-
-              {isValidCity
-                ? ` in ${cityName}`
-                : ""}
-
+              {isValidCity && (
+                <> in {cityName}</>
+              )}
             </p>
 
           </div>
@@ -408,12 +407,17 @@ export default function ContactSection({ city }) {
             <div className="col-md-6">
 
               <iframe
-                src={`https://maps.google.com/maps?q=${cityName},India&output=embed`}
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                  isValidCity
+                    ? `${cityName}, ${stateName}, India`
+                    : getValue("address")
+                )}&output=embed`}
                 width="100%"
-                height="350"
+                height="450"
                 style={{
                   border: 0,
-                  borderRadius: "16px"
+                  borderRadius: "20px",
+                  boxShadow: "0 15px 35px rgba(0,0,0,.08)"
                 }}
                 loading="lazy"
               />

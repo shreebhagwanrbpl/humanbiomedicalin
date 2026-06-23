@@ -331,7 +331,11 @@ export default function ProductsList({ city }) {
       />
       {/* HERO */}
       <section className="product-hero">
+
         <div className="container text-center hero-inner">
+          <div className="product-badge">
+            Premium Medical Equipment
+          </div>
           <h1 className="hero-title">
             Our <span>Products</span>
             {isValidCity
