@@ -2,8 +2,6 @@ import "./globals.css";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
-
-
 export const metadata = {
   metadataBase: new URL("https://humanbiomedical.in"),
 title: {
@@ -13,8 +11,6 @@ title: {
   template:
     "%s | Human Biomedical",
 },
-
-
   description:
     "Human Biomedical is a trusted supplier of laboratory equipment, pathology machines, diagnostic instruments, biomedical products and hospital equipment across India.",
 
@@ -69,4 +65,4 @@ export default function RootLayout({ children }) {
       </body>
     </html>
   );
-}
+} 
