@@ -14,6 +14,7 @@ import {
 import "../items/product.css";
 import {
   doc,
+  getDocs,
   getDoc,
   addDoc,
   collection,
@@ -26,7 +27,6 @@ import {
 } from "react-icons/fi";
 
 export async function generateMetadata({ params }) {
-
   const productName =
     decodeURIComponent(params.slug)
       .replace(/-/g, " ");
@@ -93,8 +93,8 @@ export default function ProductsList({ city }) {
 
   const [products, setProducts] = useState([]);
 
-  const [search, setSearch] = useState("");
-
+  const [categorySearch, setCategorySearch] = useState("");
+  const [productSearch, setProductSearch] = useState("");
   const [activeImg, setActiveImg] = useState("");
 
   const [showForm, setShowForm] = useState(false);
@@ -107,6 +107,7 @@ export default function ProductsList({ city }) {
 
   const [productsPerPage, setProductsPerPage] =
     useState(25);
+  const [showTopBtn, setShowTopBtn] = useState(false);
 
   const [openedCategory, setOpenedCategory] =
     useState("");
@@ -164,34 +165,16 @@ export default function ProductsList({ city }) {
   const cityName =
     formatCity(currentCity);
 
-  const getCategory = (item) => {
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowTopBtn(window.scrollY > 400);
+    };
 
-    const title =
-      (item.title || "")
-        .toLowerCase();
+    window.addEventListener("scroll", handleScroll);
 
-    if (title.includes("rapid"))
-      return "Rapid Test Kits";
-
-    if (title.includes("elisa"))
-      return "ELISA Kits";
-
-    if (title.includes("hematology"))
-      return "Hematology";
-
-    if (title.includes("electrolyte"))
-      return "Electrolyte Reagents";
-
-    if (title.includes("biochemistry"))
-      return "Biochemistry";
-
-    if (title.includes("immuno"))
-      return "Immunoassay Analyzer";
-
-    return "Other Products";
-
-  };
-
+    return () =>
+      window.removeEventListener("scroll", handleScroll);
+  }, []);
   useEffect(() => {
 
     const checkDistrict =
@@ -268,82 +251,98 @@ export default function ProductsList({ city }) {
 
   useEffect(() => {
 
-    const fetchProducts =
-      async () => {
+    const fetchProducts = async () => {
+      try {
 
-        try {
+        let allProducts = [];
 
-          const snap =
-            await getDoc(
+        // Other Products
+        const productsSnap = await getDoc(
+          doc(
+            db,
+            "websites",
+            "humanbiomedicalin",
+            "pages",
+            "products"
+          )
+        );
 
-              doc(
+        if (productsSnap.exists()) {
 
-                db,
+          const products =
+            productsSnap.data()?.products || [];
 
-                "websites",
+          products
+            .filter((p) => p.isPublished)
+            .forEach((item, index) => {
 
-                "humanbiomedicalin",
+              allProducts.push({
+                ...item,
+                id: item.id || `other-${index}`,
+                uid: `other-${index}`,
+                slug: item.slug || makeSlug(item.title),
+                category: "Other Products"
+              });
 
-                "pages",
-
-                "products"
-
-              )
-
-            );
-
-          if (!snap.exists()) return;
-
-          const raw =
-            snap.data().products || [];
-
-          const formatted =
-            raw
-
-              .filter(
-                (p) =>
-                  p.isPublished
-              )
-
-              .map(
-                (item, index) => ({
-
-                  ...item,
-
-                  uid: index,
-
-                  slug:
-                    item.slug ||
-                    makeSlug(item.title),
-
-                  category:
-                    item.category ||
-                    getCategory(item),
-
-                })
-              );
-
-          setProducts(formatted);
-
-          setLoadingProducts(false);
-
-        } catch (err) {
-
-          console.log(err);
-
-          setLoadingProducts(false);
-
+            });
         }
 
-      };
+        // Dynamic Categories
+        const categorySnap = await getDocs(
+          collection(
+            db,
+            "websites",
+            "humanbiomedicalin",
+            "pages",
+            "categoryproducts",
+            "categories"
+          )
+        );
+
+        categorySnap.forEach((catDoc) => {
+
+          const catData = catDoc.data();
+
+          const catName =
+            catData.category ||
+            catDoc.id;
+
+          (catData.products || [])
+            .filter((p) => p.isPublished)
+            .forEach((item, index) => {
+
+              allProducts.push({
+                ...item,
+                id: item.id || `${catDoc.id}-${index}`,
+                uid: `${catDoc.id}-${index}`,
+                slug: item.slug || makeSlug(item.title),
+                category: catName,
+              });
+
+            });
+
+        });
+
+        setProducts(allProducts);
+
+      } catch (err) {
+
+        console.log(err);
+
+      } finally {
+
+        setLoadingProducts(false);
+
+      }
+    };
 
     fetchProducts();
 
   }, []);
 
-    /* -----------------------------
-      SEARCH
-  ------------------------------ */
+  /* -----------------------------
+    SEARCH
+------------------------------ */
 
   const filteredProducts =
     useMemo(() => {
@@ -351,22 +350,39 @@ export default function ProductsList({ city }) {
       return products.filter((item) => {
 
         const text = `
-          ${item.title || ""}
-          ${item.brand || ""}
-          ${item.model || ""}
-          ${item.usage || ""}
-          ${item.category || ""}
-        `.toLowerCase();
+        ${item.title || ""}
+        ${item.brand || ""}
+        ${item.model || ""}
+        ${item.usage || ""}
+        ${item.category || ""}
+      `.toLowerCase();
 
         return text.includes(
-          search.toLowerCase()
+          productSearch.toLowerCase()
         );
 
       });
 
-    }, [products, search]);
+    }, [products, productSearch]);
 
+  const allGroupedProducts =
+    useMemo(() => {
 
+      const obj = {};
+
+      products.forEach((item) => {
+
+        if (!obj[item.category]) {
+          obj[item.category] = [];
+        }
+
+        obj[item.category].push(item);
+
+      });
+
+      return obj;
+
+    }, [products]);
 
   /* -----------------------------
       GROUP CATEGORY
@@ -380,9 +396,7 @@ export default function ProductsList({ city }) {
       filteredProducts.forEach((item) => {
 
         if (!obj[item.category]) {
-
           obj[item.category] = [];
-
         }
 
         obj[item.category].push(item);
@@ -393,13 +407,19 @@ export default function ProductsList({ city }) {
 
     }, [filteredProducts]);
 
-
-
   const categories =
-    Object.keys(groupedProducts);
+    Object.keys(allGroupedProducts)
+      .filter(c => c !== "Other Products")
+      .concat("Other Products");
 
-
-
+  const filteredCategories =
+    categories.filter((category) =>
+      category
+        .toLowerCase()
+        .includes(
+          categorySearch.toLowerCase()
+        )
+    );
   /* -----------------------------
       PAGINATION
   ------------------------------ */
@@ -408,9 +428,9 @@ export default function ProductsList({ city }) {
     productsPerPage === "all"
       ? 1
       : Math.ceil(
-          filteredProducts.length /
-            productsPerPage
-        );
+        filteredProducts.length /
+        productsPerPage
+      );
 
 
 
@@ -419,13 +439,13 @@ export default function ProductsList({ city }) {
       ? filteredProducts
       : filteredProducts.slice(
 
-          (currentPage - 1) *
-            productsPerPage,
+        (currentPage - 1) *
+        productsPerPage,
 
-          currentPage *
-            productsPerPage
+        currentPage *
+        productsPerPage
 
-        );
+      );
 
 
 
@@ -458,7 +478,7 @@ export default function ProductsList({ city }) {
 
   }, [
 
-    search,
+    productSearch,
 
     productsPerPage
 
@@ -504,7 +524,7 @@ export default function ProductsList({ city }) {
   ------------------------------ */
 
   const scrollToProduct = (
-    slug,
+    productId,
     category
   ) => {
 
@@ -518,7 +538,7 @@ export default function ProductsList({ city }) {
 
     const el =
       document.getElementById(
-        slug
+        productId
       );
 
     if (el) {
@@ -587,7 +607,7 @@ export default function ProductsList({ city }) {
         current &&
 
         current !==
-          activeCategory
+        activeCategory
 
       ) {
 
@@ -618,9 +638,9 @@ export default function ProductsList({ city }) {
 
   ]);
 
-    /* -----------------------------
-      QUERY FORM
-  ------------------------------ */
+  /* -----------------------------
+    QUERY FORM
+------------------------------ */
 
   const handleFormChange = (e) => {
 
@@ -718,7 +738,12 @@ export default function ProductsList({ city }) {
 
     };
 
-
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   /* -----------------------------
       LOADER
@@ -810,10 +835,10 @@ export default function ProductsList({ city }) {
           </div>
 
           <h1 className="about-title">
-          <span className="black-text">Our</span>{" "}
+            <span className="black-text">Our</span>{" "}
 
             <span className="red-text">
-             Products
+              Products
             </span>
 
             {isValidCity
@@ -849,7 +874,7 @@ export default function ProductsList({ city }) {
 
           <div className="row">
 
-                      {/* =====================
+            {/* =====================
                   LEFT SIDEBAR
             ====================== */}
 
@@ -872,11 +897,9 @@ export default function ProductsList({ city }) {
                         ? `Search in ${cityName}...`
                         : "Search Products..."
                     }
-                    value={search}
+                    value={categorySearch}
                     onChange={(e) =>
-                      setSearch(
-                        e.target.value
-                      )
+                      setCategorySearch(e.target.value)
                     }
                   />
 
@@ -884,104 +907,98 @@ export default function ProductsList({ city }) {
 
                 <div className="category-list">
 
-                  {Object.keys(
-                    groupedProducts
-                  ).map((category) => (
-
-                    <div
-                      key={category}
-                      className="category-item"
-                    >
-
-                      <button
-                        className={`category-btn ${
-                          activeCategory ===
-                          category
-                            ? "active"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          toggleCategory(
-                            category
-                          )
-                        }
-                      >
-
-                        <span>
-
-                          {openedCategory ===
-                          category ? (
-
-                            <FiChevronDown />
-
-                          ) : (
-
-                            <FiChevronRight />
-
-                          )}
-
-                          {category}
-
-                        </span>
-
-                        <span className="count">
-
-                          {
-                            groupedProducts[
-                              category
-                            ].length
-                          }
-
-                        </span>
-
-                      </button>
+                  {filteredCategories.map(
+                    (category) => (
 
                       <div
-                        className="category-content"
-                        style={{
-
-                          maxHeight:
-
-                            openedCategory ===
-                            category
-
-                              ? groupedProducts[
-                                  category
-                                ].length *
-                                  45 +
-                                "px"
-
-                              : "0px",
-
-                        }}
+                        key={category}
+                        className="category-item"
                       >
 
-                        {groupedProducts[
-                          category
-                        ].map((item) => (
+                        <button
+                          className={`category-btn ${activeCategory ===
+                            category
+                            ? "active"
+                            : ""
+                            }`}
+                          onClick={() =>
+                            toggleCategory(
+                              category
+                            )
+                          }
+                        >
 
-                          <button
-                            key={item.uid}
-                            className="product-link"
-                            onClick={() =>
-                              scrollToProduct(
-                                item.slug,
+                          <span>
+
+                            {openedCategory ===
+                              category ? (
+
+                              <FiChevronDown />
+
+                            ) : (
+
+                              <FiChevronRight />
+
+                            )}
+
+                            {category}
+
+                          </span>
+
+                          <span className="count">
+
+                            {
+                              allGroupedProducts[
                                 category
-                              )
+                              ]?.length || 0
                             }
-                          >
 
-                            {item.title}
+                          </span>
 
-                          </button>
+                        </button>
 
-                        ))}
+                        <div
+                          className="category-content"
+                          style={{
+
+                            maxHeight:
+
+                              openedCategory === category
+
+                                ? (allGroupedProducts[
+                                  category
+                                ]?.length || 0) * 45 + "px"
+
+                                : "0px",
+                          }}
+                        >
+
+                          {allGroupedProducts[
+                            category
+                          ].map((item) => (
+
+                            <button
+                              key={item.uid}
+                              className="product-link"
+                              onClick={() =>
+                                scrollToProduct(
+                                  `${category}-${item.id}`,
+                                  category
+                                )
+                              }
+                            >
+
+                              {item.title}
+
+                            </button>
+
+                          ))}
+
+                        </div>
 
                       </div>
 
-                    </div>
-
-                  ))}
+                    ))}
 
                 </div>
 
@@ -1011,11 +1028,9 @@ export default function ProductsList({ city }) {
                           ? `Search Product in ${cityName}...`
                           : "Search Product..."
                       }
-                      value={search}
+                      value={productSearch}
                       onChange={(e) =>
-                        setSearch(
-                          e.target.value
-                        )
+                        setProductSearch(e.target.value)
                       }
                     />
 
@@ -1027,7 +1042,7 @@ export default function ProductsList({ city }) {
                       className="btn-reset"
                       onClick={() => {
 
-                        setSearch("");
+                        setProductSearch("");
 
                         setCurrentPage(1);
 
@@ -1044,10 +1059,24 @@ export default function ProductsList({ city }) {
 
               </div>
 
-                            {Object.entries(
-                paginatedGroupedProducts
-              ).map(
-                ([category, list]) => (
+
+              {filteredProducts.length === 0 ? (
+
+                <div className="product-not-found">
+
+                  <h2>Product Not Found</h2>
+
+                  <p>
+                    No products found for "{productSearch}"
+                  </p>
+
+                </div>
+
+              ) : (
+
+                Object.entries(
+                  paginatedGroupedProducts
+                ).map(([category, list]) => (
 
                   <div
                     key={category}
@@ -1059,18 +1088,11 @@ export default function ProductsList({ city }) {
 
                     <div className="section-title">
 
-                      <h3>
-                        {category}
-                      </h3>
+                      <h3>{category}</h3>
 
                       <span>
-
-                        {groupedProducts[
-                          category
-                        ]?.length || 0}{" "}
-
-                        Products
-
+                        {allGroupedProducts[category]?.length || 0}
+                        {" "}Products
                       </span>
 
                     </div>
@@ -1078,8 +1100,8 @@ export default function ProductsList({ city }) {
                     {list.map((p) => (
 
                       <div
-                        key={p.uid}
-                        id={p.slug}
+                        key={p.id || p.uid}
+                        id={`${category}-${p.id}`}
                         className="product-list-card"
                       >
 
@@ -1109,80 +1131,42 @@ export default function ProductsList({ city }) {
 
                             <div className="list-content">
 
-                              <h4>
-
-                                {p.title}
-
-                              </h4>
+                              <h4>{p.title}</h4>
 
                               <p>
-
                                 {p.desc ||
                                   p.description ||
                                   "No description available."}
-
                               </p>
 
                               <div className="spec-grid">
 
                                 <div>
-
-                                  <b>
-                                    Brand
-                                  </b>
-
+                                  <b>Brand</b>
                                   <span>
-
-                                    {p.brand ||
-                                      "-"}
-
+                                    {p.brand || "-"}
                                   </span>
-
                                 </div>
 
                                 <div>
-
-                                  <b>
-                                    Usage
-                                  </b>
-
+                                  <b>Usage</b>
                                   <span>
-
-                                    {p.usage ||
-                                      "-"}
-
+                                    {p.usage || "-"}
                                   </span>
-
                                 </div>
 
                                 <div>
-
-                                  <b>
-                                    Size
-                                  </b>
-
+                                  <b>Size</b>
                                   <span>
-
-                                    {p.size ||
-                                      "-"}
-
+                                    {p.size || "-"}
                                   </span>
-
                                 </div>
 
                                 <div>
-
-                                  <b>
-                                    Model
-                                  </b>
-
+                                  <b>Model</b>
                                   <span>
-
-                                    {p.model ||
-                                      "-"}
-
+                                    {p.model || "-"}
                                   </span>
-
                                 </div>
 
                               </div>
@@ -1204,9 +1188,7 @@ export default function ProductsList({ city }) {
                                   router.push(
 
                                     isValidCity
-
                                       ? `/${citySlug}/items/${p.slug}`
-
                                       : `/items/${p.slug}`
 
                                   );
@@ -1230,10 +1212,13 @@ export default function ProductsList({ city }) {
 
                   </div>
 
-                )
+                ))
+
               )}
 
-                            {/* ======================
+
+
+              {/* ======================
                     PAGINATION
               ====================== */}
 
@@ -1289,7 +1274,7 @@ export default function ProductsList({ city }) {
                 {
 
                   productsPerPage !==
-                    "all" && (
+                  "all" && (
 
                     <div className="page-right">
 
@@ -1343,8 +1328,8 @@ export default function ProductsList({ city }) {
               </div>
 
             </div>
-</div>
           </div>
+        </div>
 
 
 
@@ -1355,7 +1340,14 @@ export default function ProductsList({ city }) {
             (PASTE YOUR OLD
             MODAL CODE HERE)
       ====================== */}
-
+      {showTopBtn && (
+        <button
+          className="back-to-top"
+          onClick={scrollToTop}
+        >
+          ↑
+        </button>
+      )}
     </>
 
   );
