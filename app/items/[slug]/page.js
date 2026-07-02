@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
     doc,
@@ -8,14 +8,24 @@ import {
     addDoc,
     collection,
 } from "firebase/firestore";
+import {
+    FaShareAlt,
+    FaWhatsapp,
+    FaFacebook,
+    FaLink,
+    FaPlay,
+} from "react-icons/fa";
 import { db } from "@/lib/firebase";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function ItemDetailPage() {
     const { slug } = useParams();
-
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [selectedImage, setSelectedImage] = useState("");
+    const [selectedMedia, setSelectedMedia] = useState("image");
+    const [showShare, setShowShare] = useState(false);
+    const shareRef = useRef();
     const [form, setForm] = useState({
         email: "",
         phone: "",
@@ -52,6 +62,21 @@ export default function ItemDetailPage() {
                     );
 
                     setProduct(found || null);
+
+if (found) {
+
+    if (found.images?.length) {
+
+        setSelectedImage(found.images[0]);
+
+    } else {
+
+        setSelectedImage(found.image);
+
+    }
+
+    setSelectedMedia("image");
+}
                 }
             } catch (err) {
                 console.log(err);
@@ -130,6 +155,48 @@ export default function ItemDetailPage() {
             );
         }
     };
+
+    const handleCopy = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    toast.success("Link Copied");
+    setShowShare(false);
+};
+
+const handleWhatsapp = () => {
+    window.open(
+        `https://wa.me/?text=${encodeURIComponent(window.location.href)}`,
+        "_blank"
+    );
+};
+
+const handleFacebook = () => {
+    window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+        "_blank"
+    );
+};
+
+useEffect(() => {
+
+    const close = (e) => {
+
+        if (
+            shareRef.current &&
+            !shareRef.current.contains(e.target)
+        ) {
+
+            setShowShare(false);
+
+        }
+
+    };
+
+    document.addEventListener("mousedown", close);
+
+    return () =>
+        document.removeEventListener("mousedown", close);
+
+}, []);
 
     if (loading) {
         return (
@@ -293,27 +360,145 @@ export default function ItemDetailPage() {
                                 justifyContent: "center",
                             }}
                         >
-                            <img
-                                src={product?.image || "/no-image.png"}
-                                alt={product?.title || "Product"}
-                                className="img-fluid"
-                                style={{
-                                    maxHeight: "550px",
-                                    width: "100%",
-                                    objectFit: "contain",
-                                    transition: "0.4s ease",
-                                }}
-                            />
-                        </div>
+                           {selectedMedia === "video" && product.video ? (
 
+    <video
+        controls
+        className="img-fluid"
+        style={{
+            maxHeight: "550px",
+            width: "100%",
+            objectFit: "contain",
+            transition: "0.4s ease",
+        }}
+    >
+        <source
+            src={product.video}
+            type="video/mp4"
+        />
+    </video>
+
+                            ) : (
+
+                                <img
+                                    src={
+                                        selectedImage ||
+                                        product.image ||
+                                        "/no-image.png"
+                                    }
+                                    alt={product?.title || "Product"}
+                                    className="img-fluid"
+                                    style={{
+                                        maxHeight: "550px",
+                                        width: "100%",
+                                        objectFit: "contain",
+                                        transition: "0.4s ease",
+                                    }}
+                                />
+
+                            )}
+                        </div>
+<div className="d-flex gap-2 flex-wrap mt-3">
+
+{(product.images?.length
+? product.images
+: [product.image]
+).map((img,index)=>(
+
+<img
+key={index}
+src={img}
+onClick={()=>{
+setSelectedImage(img);
+setSelectedMedia("image");
+}}
+style={{
+width:70,
+height:70,
+cursor:"pointer",
+objectFit:"cover",
+borderRadius:8,
+border:selectedImage===img
+?"2px solid #0d6efd"
+:"1px solid #ddd"
+}}
+/>
+
+))}
+
+{product.video&&(
+
+<button
+className="btn btn-light border"
+onClick={()=>setSelectedMedia("video")}
+>
+
+<FaPlay/>
+
+</button>
+
+)}
+
+{product.pdf&&(
+
+<a
+href={product.pdf}
+target="_blank"
+className="btn btn-light border"
+>
+
+PDF
+
+</a>
+
+)}
+
+</div>
                     </div>
 
                     {/* DETAILS */}
                     <div className="col-lg-6">
 
-                        <h1 className="fw-bold mb-3">
-                            {product.title}
-                        </h1>
+                      <div
+className="d-flex justify-content-between align-items-center mb-3"
+>
+
+<h1 className="fw-bold m-0">
+
+{product.title}
+
+</h1>
+
+<div
+ref={shareRef}
+className="position-relative"
+>
+
+<button
+    className="btn btn-light border rounded-circle"
+    onClick={async () => {
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: product.title,
+                    text: product.desc,
+                    url: window.location.href,
+                });
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success("Link Copied");
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }}
+>
+    <FaShareAlt />
+</button>
+
+</div>
+
+</div>
 
                         <p className="text-muted mb-4">
                             {product.desc}
