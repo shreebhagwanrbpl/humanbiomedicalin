@@ -32,7 +32,7 @@ HERO
   background: linear-gradient(135deg, #fafafa, #f5eeee);
   border-bottom: 1px solid #ececec;
   position: relative;
-  overflow: hidden;
+  overflow: visible !important;
 }
 
 .product-hero::before {
@@ -113,15 +113,8 @@ HERO
 LEFT SIDEBAR
 ======================================*/
 
-.category-sidebar {
-  position: sticky;
-  top: 90px;
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid #ececec;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
-}
+
+
 
 .sidebar-title {
   padding: 18px;
@@ -130,6 +123,7 @@ LEFT SIDEBAR
   background: #fafafa;
   border-bottom: 1px solid #ececec;
 }
+
 
 .sidebar-search {
   padding: 15px;
@@ -1071,4 +1065,39 @@ select:focus {
 
 .product-not-found p {
   color: #666;
+}
+
+.category-sidebar {
+  background: #fff;
+}
+
+.products-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 25px;
+}
+
+@media (max-width:991px) {
+
+  .products-layout {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width:768px) {
+
+  .product-list-card .row {
+    flex-direction: column;
+  }
+
+  .product-action {
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .btn-view {
+    width: 100%;
+  }
+
 }

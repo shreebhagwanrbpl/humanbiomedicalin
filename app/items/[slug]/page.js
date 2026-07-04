@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import "./page.css"
 import {
     doc,
     getDoc,
@@ -30,7 +31,34 @@ export default function ItemDetailPage() {
         email: "",
         phone: "",
     });
+    const pathname = usePathname();
 
+    const pathParts = pathname.split("/").filter(Boolean);
+
+    const reservedRoutes = [
+        "about",
+        "contact",
+        "items",
+        "products",
+        "services",
+        "get-in-touch",
+    ];
+
+    const district =
+        pathParts[0] &&
+            !reservedRoutes.includes(pathParts[0])
+            ? pathParts[0]
+            : "india";
+
+    const city =
+        district
+            .split("-")
+            .map(
+                word =>
+                    word.charAt(0).toUpperCase() +
+                    word.slice(1)
+            )
+            .join(" ");
     const makeSlug = (text = "") =>
         text
             .toLowerCase()
@@ -63,20 +91,20 @@ export default function ItemDetailPage() {
 
                     setProduct(found || null);
 
-if (found) {
+                    if (found) {
 
-    if (found.images?.length) {
+                        if (found.images?.length) {
 
-        setSelectedImage(found.images[0]);
+                            setSelectedImage(found.images[0]);
 
-    } else {
+                        } else {
 
-        setSelectedImage(found.image);
+                            setSelectedImage(found.image);
 
-    }
+                        }
 
-    setSelectedMedia("image");
-}
+                        setSelectedMedia("image");
+                    }
                 }
             } catch (err) {
                 console.log(err);
@@ -157,46 +185,46 @@ if (found) {
     };
 
     const handleCopy = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    toast.success("Link Copied");
-    setShowShare(false);
-};
-
-const handleWhatsapp = () => {
-    window.open(
-        `https://wa.me/?text=${encodeURIComponent(window.location.href)}`,
-        "_blank"
-    );
-};
-
-const handleFacebook = () => {
-    window.open(
-        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
-        "_blank"
-    );
-};
-
-useEffect(() => {
-
-    const close = (e) => {
-
-        if (
-            shareRef.current &&
-            !shareRef.current.contains(e.target)
-        ) {
-
-            setShowShare(false);
-
-        }
-
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link Copied");
+        setShowShare(false);
     };
 
-    document.addEventListener("mousedown", close);
+    const handleWhatsapp = () => {
+        window.open(
+            `https://wa.me/?text=${encodeURIComponent(window.location.href)}`,
+            "_blank"
+        );
+    };
 
-    return () =>
-        document.removeEventListener("mousedown", close);
+    const handleFacebook = () => {
+        window.open(
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+            "_blank"
+        );
+    };
 
-}, []);
+    useEffect(() => {
+
+        const close = (e) => {
+
+            if (
+                shareRef.current &&
+                !shareRef.current.contains(e.target)
+            ) {
+
+                setShowShare(false);
+
+            }
+
+        };
+
+        document.addEventListener("mousedown", close);
+
+        return () =>
+            document.removeEventListener("mousedown", close);
+
+    }, []);
 
     if (loading) {
         return (
@@ -360,23 +388,23 @@ useEffect(() => {
                                 justifyContent: "center",
                             }}
                         >
-                           {selectedMedia === "video" && product.video ? (
+                            {selectedMedia === "video" && product.video ? (
 
-    <video
-        controls
-        className="img-fluid"
-        style={{
-            maxHeight: "550px",
-            width: "100%",
-            objectFit: "contain",
-            transition: "0.4s ease",
-        }}
-    >
-        <source
-            src={product.video}
-            type="video/mp4"
-        />
-    </video>
+                                <video
+                                    controls
+                                    className="img-fluid"
+                                    style={{
+                                        maxHeight: "550px",
+                                        width: "100%",
+                                        objectFit: "contain",
+                                        transition: "0.4s ease",
+                                    }}
+                                >
+                                    <source
+                                        src={product.video}
+                                        type="video/mp4"
+                                    />
+                                </video>
 
                             ) : (
 
@@ -398,107 +426,103 @@ useEffect(() => {
 
                             )}
                         </div>
-<div className="d-flex gap-2 flex-wrap mt-3">
+                        <div className="d-flex gap-2 flex-wrap mt-3">
 
-{(product.images?.length
-? product.images
-: [product.image]
-).map((img,index)=>(
+                            {(product.images?.length
+                                ? product.images
+                                : [product.image]
+                            ).map((img, index) => (
 
-<img
-key={index}
-src={img}
-onClick={()=>{
-setSelectedImage(img);
-setSelectedMedia("image");
-}}
-style={{
-width:70,
-height:70,
-cursor:"pointer",
-objectFit:"cover",
-borderRadius:8,
-border:selectedImage===img
-?"2px solid #0d6efd"
-:"1px solid #ddd"
-}}
-/>
+                                <img
+                                    key={index}
+                                    src={img}
+                                    onClick={() => {
+                                        setSelectedImage(img);
+                                        setSelectedMedia("image");
+                                    }}
+                                    style={{
+                                        width: 70,
+                                        height: 70,
+                                        cursor: "pointer",
+                                        objectFit: "cover",
+                                        borderRadius: 8,
+                                        border: selectedImage === img
+                                            ? "2px solid #0d6efd"
+                                            : "1px solid #ddd"
+                                    }}
+                                />
 
-))}
+                            ))}
 
-{product.video&&(
+                            {product.video && (
+                                <div
+                                    className={`media-thumb ${selectedMedia === "video" ? "active-thumb" : ""
+                                        }`}
+                                    onClick={() => setSelectedMedia("video")}
+                                >
+                                    <FaPlay size={28} />
+                                    <span>Video</span>
+                                </div>
+                            )}
 
-<button
-className="btn btn-light border"
-onClick={()=>setSelectedMedia("video")}
->
+                            {product.pdf && (
+                                <a
+                                    href={product.pdf}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="media-thumb"
+                                >
+                                    <span className="pdf-icon">📄</span>
+                                    <span>PDF</span>
+                                </a>
+                            )}
 
-<FaPlay/>
-
-</button>
-
-)}
-
-{product.pdf&&(
-
-<a
-href={product.pdf}
-target="_blank"
-className="btn btn-light border"
->
-
-PDF
-
-</a>
-
-)}
-
-</div>
+                        </div>
                     </div>
 
                     {/* DETAILS */}
                     <div className="col-lg-6">
 
-                      <div
-className="d-flex justify-content-between align-items-center mb-3"
->
+                        <div
+                            className="d-flex justify-content-between align-items-center mb-3"
+                        >
 
-<h1 className="fw-bold m-0">
+                            <h1 className="fw-bold m-0">
 
-{product.title}
+                                {product.title}
 
-</h1>
+                            </h1>
 
-<div
-ref={shareRef}
-className="position-relative"
->
+                            <div
+                                ref={shareRef}
+                                className="position-relative"
+                            >
 
-<button
-    className="btn btn-light border rounded-circle"
-    onClick={async () => {
-        try {
-            if (navigator.share) {
-                await navigator.share({
-                    title: product.title,
-                    text: product.desc,
-                    url: window.location.href,
-                });
-            } else {
-                await navigator.clipboard.writeText(window.location.href);
-                toast.success("Link Copied");
-            }
-        } catch (err) {
-            console.log(err);
-        }
-    }}
->
-    <FaShareAlt />
-</button>
+                                <button
+                                    className="btn btn-light border rounded-circle"
+                                    onClick={async () => {
+                                        try {
+                                            if (navigator.share) {
+                                                await navigator.share({
+                                                    title: product.title,
+                                                    text: product.desc,
+                                                    url: window.location.href,
+                                                });
+                                            } else {
+                                                await navigator.clipboard.writeText(window.location.href);
+                                                toast.success("Link Copied");
+                                            }
+                                        } catch (err) {
+                                            console.log(err);
+                                        }
+                                    }}
+                                >
+                                    <FaShareAlt />
+                                </button>
 
-</div>
+                            </div>
 
-</div>
+                        </div>
 
                         <p className="text-muted mb-4">
                             {product.desc}
@@ -594,7 +618,76 @@ className="position-relative"
                         </div>
 
                     </div>
+                    <div className="seo-content mt-5">
 
+                        <h2>
+                            {product.title} Supplier, Manufacturer & Exporter in {city}
+                        </h2>
+
+                        <p>
+                            Looking for the best {product.title} in {city}? We are a trusted
+                            supplier, manufacturer, exporter and distributor of high-quality
+                            {product.title} for hospitals, pathology laboratories, diagnostic
+                            centers, research institutes and healthcare facilities. Our
+                            advanced laboratory equipment is designed to deliver reliable
+                            performance, accurate testing and long-term durability.
+                        </p>
+
+                        <h3>
+                            Why Choose Our {product.title} in {city}
+                        </h3>
+
+                        <p>
+                            We provide premium quality {product.title} in {city} with complete
+                            installation support, operator training, maintenance services and
+                            technical assistance. Our products are widely used in hospitals,
+                            medical colleges, pathology labs and diagnostic centers across
+                            {city}.
+                        </p>
+
+                        <h3>
+                            {product.title} Manufacturer in {city}
+                        </h3>
+
+                        <p>
+                            As a leading {product.title} manufacturer in {city}, we offer
+                            advanced biomedical equipment, laboratory instruments, diagnostic
+                            analyzers and healthcare solutions that meet modern industry
+                            standards.
+                        </p>
+
+                        <h3>
+                            {product.title} Supplier in {city}
+                        </h3>
+
+                        <p>
+                            We are among the most trusted {product.title} suppliers in {city}
+                            providing genuine products, fast delivery, competitive pricing,
+                            installation support and after-sales services.
+                        </p>
+
+                        <h3>
+                            {product.title} Exporter in {city}
+                        </h3>
+
+                        <p>
+                            Our company is recognized as a reliable {product.title} exporter
+                            in {city}, supplying laboratory equipment, pathology instruments
+                            and biomedical devices to healthcare organizations across India.
+                        </p>
+
+                        <h3>
+                            Buy {product.title} at Best Price in {city}
+                        </h3>
+
+                        <p>
+                            Contact us today for the latest {product.title} price in {city},
+                            product specifications, quotation, installation services and
+                            expert consultation. We help laboratories and hospitals choose
+                            the right diagnostic equipment according to their requirements.
+                        </p>
+
+                    </div>
                 </div>
 
             </div>
