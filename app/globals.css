@@ -12,7 +12,6 @@ section {
 
 html,
 body {
-  overflow-x: hidden;
 }
 
 /* ===== FOOTER ===== */
@@ -156,7 +155,6 @@ footer a:hover {
 body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
   background: #fafafa;
   color: #111;
   font-family: "Poppins", sans-serif;
