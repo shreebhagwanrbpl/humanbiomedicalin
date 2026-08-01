@@ -1,5 +1,17 @@
-import ProductsList from "../sections/items/ProductsList";
+import { fetchFullCatalog } from "@/lib/data-fetcher-server";
+import ProductsClient from "./ProductsClient";
 
-export default function ProductsPage() {
-  return <ProductsList />;
+export const revalidate = 3600; // Revalidate cache every hour
+
+export default async function ProductsPage({ district = null, city = null }) {
+  // Fetch full catalog from server cache
+  const allProducts = await fetchFullCatalog();
+
+  return (
+    <ProductsClient
+      initialProducts={allProducts}
+      district={district}
+      city={city}
+    />
+  );
 }

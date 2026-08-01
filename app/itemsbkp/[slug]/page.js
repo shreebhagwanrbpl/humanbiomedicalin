@@ -1,0 +1,697 @@
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import { useParams, usePathname } from "next/navigation";
+import "./page.css"
+import {
+    doc,
+    getDoc,
+    addDoc,
+    collection,
+} from "firebase/firestore";
+import {
+    FaShareAlt,
+    FaWhatsapp,
+    FaFacebook,
+    FaLink,
+    FaPlay,
+} from "react-icons/fa";
+import { db } from "@/lib/firebase";
+import toast, { Toaster } from "react-hot-toast";
+
+export default function ItemDetailPage() {
+    const { slug } = useParams();
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [selectedImage, setSelectedImage] = useState("");
+    const [selectedMedia, setSelectedMedia] = useState("image");
+    const [showShare, setShowShare] = useState(false);
+    const shareRef = useRef();
+    const [form, setForm] = useState({
+        email: "",
+        phone: "",
+    });
+    const pathname = usePathname();
+
+    const pathParts = pathname.split("/").filter(Boolean);
+
+    const reservedRoutes = [
+        "about",
+        "contact",
+        "items",
+        "products",
+        "services",
+        "get-in-touch",
+    ];
+
+    const district =
+        pathParts[0] &&
+            !reservedRoutes.includes(pathParts[0])
+            ? pathParts[0]
+            : "india";
+
+    const city =
+        district
+            .split("-")
+            .map(
+                word =>
+                    word.charAt(0).toUpperCase() +
+                    word.slice(1)
+            )
+            .join(" ");
+    const makeSlug = (text = "") =>
+        text
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, "")
+            .replace(/\s+/g, "-");
+    useEffect(() => {
+        const fetchProduct = async () => {
+            const start = Date.now();
+
+            try {
+                const snap = await getDoc(
+                    doc(
+                        db,
+                        "websites",
+                        "humanbiomedicalin",
+                        "pages",
+                        "products"
+                    )
+                );
+
+                if (snap.exists()) {
+                    const products =
+                        snap.data().products || [];
+
+                    const found = products.find(
+                        (item) =>
+                            makeSlug(item.title) === slug
+                    );
+
+                    setProduct(found || null);
+
+                    if (found) {
+
+                        if (found.images?.length) {
+
+                            setSelectedImage(found.images[0]);
+
+                        } else {
+
+                            setSelectedImage(found.image);
+
+                        }
+
+                        setSelectedMedia("image");
+                    }
+                }
+            } catch (err) {
+                console.log(err);
+            } finally {
+                const elapsed =
+                    Date.now() - start;
+
+                const remaining =
+                    Math.max(1500 - elapsed, 0);
+
+                setTimeout(() => {
+                    setLoading(false);
+                }, remaining);
+            }
+        };
+
+        fetchProduct();
+    }, [slug]);
+
+    const handleSubmit = async () => {
+        const email = form.email.trim();
+        const phone = form.phone.trim();
+
+        if (!email || !phone) {
+            return toast.error("Please fill all fields");
+        }
+
+        // Email validation
+        const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+            return toast.error(
+                "Please enter a valid email address"
+            );
+        }
+
+        // Phone validation (10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+
+        if (!phoneRegex.test(phone)) {
+            return toast.error(
+                "Please enter a valid 10 digit phone number"
+            );
+        }
+
+        try {
+            await addDoc(
+                collection(
+                    db,
+                    "websitesQueries",
+                    "humanbiomedicalin",
+                    "productQueries"
+                ),
+                {
+                    productName:
+                        product?.title || "",
+                    email,
+                    phone,
+                    createdAt: new Date(),
+                }
+            );
+
+            toast.success(
+                "Query submitted successfully"
+            );
+
+            setForm({
+                email: "",
+                phone: "",
+            });
+        } catch (err) {
+            console.log(err);
+            toast.error(
+                "Something went wrong"
+            );
+        }
+    };
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link Copied");
+        setShowShare(false);
+    };
+
+    const handleWhatsapp = () => {
+        window.open(
+            `https://wa.me/?text=${encodeURIComponent(window.location.href)}`,
+            "_blank"
+        );
+    };
+
+    const handleFacebook = () => {
+        window.open(
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+            "_blank"
+        );
+    };
+
+    useEffect(() => {
+
+        const close = (e) => {
+
+            if (
+                shareRef.current &&
+                !shareRef.current.contains(e.target)
+            ) {
+
+                setShowShare(false);
+
+            }
+
+        };
+
+        document.addEventListener("mousedown", close);
+
+        return () =>
+            document.removeEventListener("mousedown", close);
+
+    }, []);
+
+    if (loading) {
+        return (
+            <>
+                <div
+                    className="product-loader"
+                    style={{
+                        minHeight: "calc(100vh + 200px)"
+                    }}
+                >
+
+                    <div className="loader-left">
+
+                        <div className="skeleton skeleton-title"></div>
+
+                        <div className="skeleton skeleton-text"></div>
+                        <div className="skeleton skeleton-text"></div>
+                        <div className="skeleton skeleton-text short"></div>
+
+                        <div className="skeleton skeleton-card"></div>
+
+                        <div className="skeleton skeleton-input"></div>
+                        <div className="skeleton skeleton-input"></div>
+
+                        <div className="skeleton skeleton-btn"></div>
+
+                    </div>
+
+                    <div className="loader-right">
+                        <div className="skeleton skeleton-image"></div>
+                    </div>
+
+                </div>
+
+                <style jsx>{`
+.product-loader{
+    min-height: 100vh;
+
+    padding-top: 120px;
+    box-sizing: border-box;
+
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:50px;
+    align-items:center;
+
+    padding-left:5%;
+    padding-right:5%;
+}
+
+                .skeleton{
+                    border-radius:12px;
+                    background: linear-gradient(
+                        90deg,
+                        #f0f0f0 25%,
+                        #e0e0e0 37%,
+                        #f0f0f0 63%
+                    );
+
+                    background-size:400% 100%;
+                    animation:amazonLoader 1.4s ease infinite;
+                }
+
+                @keyframes amazonLoader{
+                    0%{
+                        background-position:100% 50%;
+                    }
+                    100%{
+                        background-position:0 50%;
+                    }
+                }
+
+                .skeleton-title{
+                    height:60px;
+                    margin-bottom:25px;
+                }
+
+                .skeleton-text{
+                    height:18px;
+                    margin-bottom:12px;
+                }
+
+                .skeleton-text.short{
+                    width:70%;
+                }
+
+                .skeleton-card{
+                    height:220px;
+                    margin:30px 0;
+                }
+
+                .skeleton-input{
+                    height:50px;
+                    margin-bottom:15px;
+                }
+
+                .skeleton-btn{
+                    height:50px;
+                    width:180px;
+                }
+
+                .skeleton-image{
+                    width:100%;
+                    height:500px;
+                    border-radius:25px;
+                }
+
+                @media(max-width:768px){
+                    .product-loader{
+                        grid-template-columns:1fr;
+                        padding:20px;
+                    }
+
+                    .skeleton-image{
+                        height:320px;
+                    }
+                }
+            `}</style>
+            </>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div
+                style={{
+                    minHeight: "100vh",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center"
+                }}
+            >
+                Product Not Found
+            </div>
+        );
+    }
+    return (
+        <>
+
+            <Toaster position="top-right" />
+
+            <div className="container py-5 mt-5">
+
+                <div className="row align-items-center g-5">
+
+                    {/* IMAGE */}
+                    <div className="col-lg-6 text-center">
+
+                        <div
+                            style={{
+                                background: "#fff",
+                                borderRadius: "24px",
+                                padding: "40px",
+                                boxShadow:
+                                    "0 20px 50px rgba(0,0,0,.08)",
+                                border: "1px solid #eee",
+                                minHeight: "650px",
+
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            {selectedMedia === "video" && product.video ? (
+
+                                <video
+                                    controls
+                                    className="img-fluid"
+                                    style={{
+                                        maxHeight: "550px",
+                                        width: "100%",
+                                        objectFit: "contain",
+                                        transition: "0.4s ease",
+                                    }}
+                                >
+                                    <source
+                                        src={product.video}
+                                        type="video/mp4"
+                                    />
+                                </video>
+
+                            ) : (
+
+                                <img
+                                    src={
+                                        selectedImage ||
+                                        product.image ||
+                                        "/no-image.png"
+                                    }
+                                    alt={product?.title || "Product"}
+                                    className="img-fluid"
+                                    style={{
+                                        maxHeight: "550px",
+                                        width: "100%",
+                                        objectFit: "contain",
+                                        transition: "0.4s ease",
+                                    }}
+                                />
+
+                            )}
+                        </div>
+                        <div className="d-flex gap-2 flex-wrap mt-3">
+
+                            {(product.images?.length
+                                ? product.images
+                                : [product.image]
+                            ).map((img, index) => (
+
+                                <img
+                                    key={index}
+                                    src={img}
+                                    onClick={() => {
+                                        setSelectedImage(img);
+                                        setSelectedMedia("image");
+                                    }}
+                                    style={{
+                                        width: 70,
+                                        height: 70,
+                                        cursor: "pointer",
+                                        objectFit: "cover",
+                                        borderRadius: 8,
+                                        border: selectedImage === img
+                                            ? "2px solid #0d6efd"
+                                            : "1px solid #ddd"
+                                    }}
+                                />
+
+                            ))}
+
+                            {product.video && (
+                                <div
+                                    className={`media-thumb ${selectedMedia === "video" ? "active-thumb" : ""
+                                        }`}
+                                    onClick={() => setSelectedMedia("video")}
+                                >
+                                    <FaPlay size={28} />
+                                    <span>Video</span>
+                                </div>
+                            )}
+
+                            {product.pdf && (
+                                <a
+                                    href={product.pdf}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="media-thumb"
+                                >
+                                    <span className="pdf-icon">📄</span>
+                                    <span>PDF</span>
+                                </a>
+                            )}
+
+                        </div>
+                    </div>
+
+                    {/* DETAILS */}
+                    <div className="col-lg-6">
+
+                        <div
+                            className="d-flex justify-content-between align-items-center mb-3"
+                        >
+
+                            <h1 className="fw-bold m-0">
+
+                                {product.title}
+
+                            </h1>
+
+                            <div
+                                ref={shareRef}
+                                className="position-relative"
+                            >
+
+                                <button
+                                    className="btn btn-light border rounded-circle"
+                                    onClick={async () => {
+                                        try {
+                                            if (navigator.share) {
+                                                await navigator.share({
+                                                    title: product.title,
+                                                    text: product.desc,
+                                                    url: window.location.href,
+                                                });
+                                            } else {
+                                                await navigator.clipboard.writeText(window.location.href);
+                                                toast.success("Link Copied");
+                                            }
+                                        } catch (err) {
+                                            console.log(err);
+                                        }
+                                    }}
+                                >
+                                    <FaShareAlt />
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <p className="text-muted mb-4">
+                            {product.desc}
+                        </p>
+
+                        <div className="card border-0 shadow-sm p-4">
+
+                            <div className="row">
+
+                                <div className="col-6 mb-3">
+                                    <strong>Brand</strong>
+                                    <br />
+                                    {product.brand || "-"}
+                                </div>
+
+                                <div className="col-6 mb-3">
+                                    <strong>Model</strong>
+                                    <br />
+                                    {product.model || "-"}
+                                </div>
+
+                                <div className="col-6 mb-3">
+                                    <strong>Usage</strong>
+                                    <br />
+                                    {product.usage || "-"}
+                                </div>
+
+                                <div className="col-6 mb-3">
+                                    <strong>Capacity</strong>
+                                    <br />
+                                    {product.capacity || "-"}
+                                </div>
+
+                                <div className="col-6 mb-3">
+                                    <strong>Automation</strong>
+                                    <br />
+                                    {product.automation || "-"}
+                                </div>
+
+                                <div className="col-6 mb-3">
+                                    <strong>Availability</strong>
+                                    <br />
+                                    {product.availability || "-"}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {/* QUERY FORM */}
+                        <div className="card shadow-sm border-0 p-4 mt-4">
+
+                            <h4 className="mb-3">
+                                Get Details
+                            </h4>
+
+                            <input
+                                type="email"
+                                className="form-control mb-3"
+                                placeholder="Email"
+                                value={form.email}
+                                required
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        email: e.target.value,
+                                    })
+                                }
+                            />
+
+                            <input
+                                type="tel"
+                                className="form-control mb-3"
+                                placeholder="Phone Number"
+                                value={form.phone}
+                                maxLength={10}
+                                required
+                                onChange={(e) =>
+                                    setForm({
+                                        ...form,
+                                        phone: e.target.value.replace(/\D/g, "")
+                                    })
+                                }
+                            />
+
+                            <button
+                                className="btn btn-dark"
+                                onClick={handleSubmit}
+                            >
+                                Submit Query
+                            </button>
+
+                        </div>
+
+                    </div>
+                    <div className="seo-content mt-5">
+
+                        <h2>
+                            {product.title} Supplier, Manufacturer & Exporter in {city}
+                        </h2>
+
+                        <p>
+                            Looking for the best {product.title} in {city}? We are a trusted
+                            supplier, manufacturer, exporter and distributor of high-quality
+                            {product.title} for hospitals, pathology laboratories, diagnostic
+                            centers, research institutes and healthcare facilities. Our
+                            advanced laboratory equipment is designed to deliver reliable
+                            performance, accurate testing and long-term durability.
+                        </p>
+
+                        <h3>
+                            Why Choose Our {product.title} in {city}
+                        </h3>
+
+                        <p>
+                            We provide premium quality {product.title} in {city} with complete
+                            installation support, operator training, maintenance services and
+                            technical assistance. Our products are widely used in hospitals,
+                            medical colleges, pathology labs and diagnostic centers across
+                            {city}.
+                        </p>
+
+                        <h3>
+                            {product.title} Manufacturer in {city}
+                        </h3>
+
+                        <p>
+                            As a leading {product.title} manufacturer in {city}, we offer
+                            advanced biomedical equipment, laboratory instruments, diagnostic
+                            analyzers and healthcare solutions that meet modern industry
+                            standards.
+                        </p>
+
+                        <h3>
+                            {product.title} Supplier in {city}
+                        </h3>
+
+                        <p>
+                            We are among the most trusted {product.title} suppliers in {city}
+                            providing genuine products, fast delivery, competitive pricing,
+                            installation support and after-sales services.
+                        </p>
+
+                        <h3>
+                            {product.title} Exporter in {city}
+                        </h3>
+
+                        <p>
+                            Our company is recognized as a reliable {product.title} exporter
+                            in {city}, supplying laboratory equipment, pathology instruments
+                            and biomedical devices to healthcare organizations across India.
+                        </p>
+
+                        <h3>
+                            Buy {product.title} at Best Price in {city}
+                        </h3>
+
+                        <p>
+                            Contact us today for the latest {product.title} price in {city},
+                            product specifications, quotation, installation services and
+                            expert consultation. We help laboratories and hospitals choose
+                            the right diagnostic equipment according to their requirements.
+                        </p>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </>
+    );
+}

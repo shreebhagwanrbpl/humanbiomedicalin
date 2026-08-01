@@ -14,7 +14,6 @@ html {
 
 body {
   background: #f7f8fa;
-  overflow-x: hidden;
   font-family: inherit;
 }
 
@@ -32,7 +31,7 @@ HERO
   background: linear-gradient(135deg, #fafafa, #f5eeee);
   border-bottom: 1px solid #ececec;
   position: relative;
-  overflow: visible !important;
+  overflow: hidden;
 }
 
 .product-hero::before {
@@ -145,12 +144,92 @@ LEFT SIDEBAR
 }
 
 .category-list {
-  max-height: 78vh;
+  max-height: calc(100vh - 170px);
   overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
 }
 
 .category-list::-webkit-scrollbar {
   width: 6px;
+}
+
+.category-item {
+  position: relative;
+}
+
+.category-btn {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #fff;
+}
+
+.subcategory-btn:hover {
+
+  background: #fff4f4;
+  color: #d62828;
+  border-color: #d62828;
+
+}
+
+.subcategory-btn.active {
+
+  background: #d62828;
+  color: #fff;
+
+}
+
+.sub-count {
+
+  min-width: 26px;
+  height: 26px;
+
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ececec;
+
+  font-size: 11px;
+  font-weight: 700;
+
+}
+
+.subcategory-item {
+
+  margin-bottom: 8px;
+
+}
+
+.subcategory-btn {
+
+  position: sticky;
+  top: 56px;
+
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 12px 14px;
+
+  background: #fafafa;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+
+  margin: 6px 0;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #333;
+
+  cursor: pointer;
+
+  transition: .25s;
 }
 
 .category-list::-webkit-scrollbar-thumb {
@@ -207,13 +286,6 @@ LEFT SIDEBAR
 .category-btn.active .count {
   background: #fff;
   color: #d62828;
-}
-
-.category-content {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height .35s ease;
-  background: #fff;
 }
 
 .product-link {
@@ -1100,4 +1172,13 @@ select:focus {
     width: 100%;
   }
 
+}
+
+@media (min-width: 992px) {
+  .sticky-sidebar {
+    position: sticky !important;
+    top: 100px !important;
+    align-self: start !important;
+    max-height: calc(100vh - 120px) !important;
+  }
 }
