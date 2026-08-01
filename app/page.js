@@ -4,7 +4,13 @@ import Hero from "./components/Hero";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot, getDoc } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  getDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import Link from "next/link";
 
 // import toast from "react-hot-toast";
@@ -129,43 +135,74 @@ export default function Home({ city }) {
   }, [pathname]);
 
   // FETCH PRODUCTS
-  useEffect(() => {
+useEffect(() => {
 
-    const fetchProducts = async () => {
+  const fetchProducts = async () => {
 
-      try {
+    try {
 
-        const snap = await getDoc(
-          doc(
+      const categorySnap = await getDocs(
+        collection(
+          db,
+          "websites",
+          "humanbiomedicalin",
+          "pages",
+          "categoryproducts",
+          "categories"
+        )
+      );
+
+      let allProducts = [];
+
+      for (const categoryDoc of categorySnap.docs) {
+
+        const subCategorySnap = await getDocs(
+          collection(
             db,
             "websites",
             "humanbiomedicalin",
             "pages",
-            "products"
+            "categoryproducts",
+            "categories",
+            categoryDoc.id,
+            "subcategories"
           )
         );
 
-        if (snap.exists()) {
+        subCategorySnap.forEach((subDoc) => {
 
-          const data = snap.data().products || [];
+          const data = subDoc.data();
 
-          const filtered = data
-            .filter((item) => item.isPublished)
-            .slice(0, 4);
+          if (Array.isArray(data.products)) {
 
-          setProducts(filtered);
+            data.products.forEach((product) => {
 
-        }
+              if (product.isPublished) {
+                allProducts.push(product);
+              }
 
-      } catch (err) {
-        console.error(err);
+            });
+
+          }
+
+        });
+
       }
 
-    };
+      // Random 4 products
+      allProducts.sort(() => Math.random() - 0.5);
 
-    fetchProducts();
+      setProducts(allProducts.slice(0, 4));
 
-  }, [pathname]);
+    } catch (err) {
+      console.error(err);
+    }
+
+  };
+
+  fetchProducts();
+
+}, [pathname]);
 
   const icons = ["🧪", "💊", "⚙️", "🔧", "🌍", "📊"];
 
@@ -345,6 +382,8 @@ export default function Home({ city }) {
                     <img
                       src={
                         item.image ||
+                        item.images?.[0]?.url ||
+                        item.images?.[0] ||
                         "/no-image.png"
                       }
                       className="product-img"
