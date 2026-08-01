@@ -1101,3 +1101,59 @@ select:focus {
   }
 
 }
+
+
+@media (max-width: 576px) {
+
+    .seo-content {
+        padding: 20px;
+        margin-top: 40px;
+    }
+
+    .seo-content h2 {
+        font-size: 24px;
+    }
+
+    .seo-content h3 {
+        font-size: 20px;
+    }
+
+    .seo-content p {
+        font-size: 15px;
+        line-height: 1.8;
+    }
+
+    .seo-features {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+/* =====================================
+   PRODUCT IMAGE WATERMARK
+===================================== */
+
+.list-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.list-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.list-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background-image: url("/watermark.svg");
+    background-repeat: repeat;
+    background-size: 180px 120px;
+
+    opacity: 0.45;
+    pointer-events: none;
+}

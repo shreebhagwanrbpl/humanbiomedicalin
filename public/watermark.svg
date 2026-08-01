@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="140">
+  <defs>
+    <style>
+      .wm {
+        fill: #000000;
+        fill-opacity: 0.16;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 20px;
+        font-weight: bold;
+      }
+    </style>
+  </defs>
+
+  <g transform="rotate(-25 110 70)">
+    <text x="20" y="75" class="wm">Human Biomedical</text>
+  </g>
+</svg>
