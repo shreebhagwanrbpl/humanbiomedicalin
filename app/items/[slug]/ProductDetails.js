@@ -34,6 +34,7 @@ export default function ProductDetails({ slug, product: initialProduct }) {
     const [selectedMedia, setSelectedMedia] = useState("image");
     const [showShare, setShowShare] = useState(false);
     const [loading, setLoading] = useState(!initialProduct);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
     const shareRef = useRef();
     const [form, setForm] = useState({
@@ -41,6 +42,22 @@ export default function ProductDetails({ slug, product: initialProduct }) {
         email: "",
         phone: "",
     });
+
+    const handleDownloadPDF = async () => {
+        if (!product || isGeneratingPDF) return;
+        const toastId = toast.loading("Generating product PDF brochure...");
+        setIsGeneratingPDF(true);
+        try {
+            const { generateProductPDF } = await import("@/lib/generateProductPDF");
+            await generateProductPDF(product, selectedImage, cityName);
+            toast.success("PDF Brochure Downloaded!", { id: toastId });
+        } catch (err) {
+            console.error("PDF generation error:", err);
+            toast.error("Failed to generate PDF. Please try again.", { id: toastId });
+        } finally {
+            setIsGeneratingPDF(false);
+        }
+    };
 
     const [submitting, setSubmitting] = useState(false);
     const pathname = usePathname();
@@ -475,9 +492,34 @@ export default function ProductDetails({ slug, product: initialProduct }) {
                                     className="media-thumb"
                                 >
                                     <span className="pdf-icon">📄</span>
-                                    <span>PDF</span>
+                                    <span>View PDF</span>
                                 </a>
                             )}
+
+                            <button
+                                type="button"
+                                onClick={handleDownloadPDF}
+                                disabled={isGeneratingPDF}
+                                className={`media-thumb ${isGeneratingPDF ? "opacity-60 cursor-not-allowed" : ""}`}
+                                style={{
+                                    border: "1px solid #cbd5e1",
+                                    borderRadius: "8px",
+                                    padding: "8px 14px",
+                                    background: "#f8fafc",
+                                    cursor: isGeneratingPDF ? "not-allowed" : "pointer",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "2px",
+                                    minWidth: "70px",
+                                    height: "70px"
+                                }}
+                                title="Download Product PDF Brochure"
+                            >
+                                <span className="pdf-icon" style={{ fontSize: "18px" }}>📥</span>
+                                <span style={{ fontSize: "11px", fontWeight: "600" }}>{isGeneratingPDF ? "Saving..." : "Save PDF"}</span>
+                            </button>
                         </div>
                     </div>
 
@@ -590,6 +632,34 @@ export default function ProductDetails({ slug, product: initialProduct }) {
                                     <br />
                                     {product.availability || "-"}
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* PDF BROCHURE CTA */}
+                        <div className="card shadow-sm border-0 p-4 mt-4" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", color: "#fff", borderRadius: "16px" }}>
+                            <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                <div>
+                                    <h5 className="m-0 text-white font-bold" style={{ fontSize: "17px" }}>Download Product Brochure</h5>
+                                    <p className="m-0 text-slate-300 small mt-1" style={{ fontSize: "13px", opacity: 0.85 }}>
+                                        Get official technical brochure with specifications & image watermark.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    disabled={isGeneratingPDF}
+                                    className="btn btn-warning font-semibold text-slate-900 border-0"
+                                    style={{
+                                        borderRadius: "10px",
+                                        padding: "10px 20px",
+                                        fontWeight: "700",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                        cursor: isGeneratingPDF ? "not-allowed" : "pointer"
+                                    }}
+                                >
+                                    📄 {isGeneratingPDF ? "Generating PDF..." : "Download PDF Brochure"}
+                                </button>
                             </div>
                         </div>
 

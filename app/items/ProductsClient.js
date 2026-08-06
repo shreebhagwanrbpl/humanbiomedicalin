@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback, memo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Toaster } from "react-hot-toast";
 import {
@@ -138,6 +138,9 @@ const CategoryItem = memo(function CategoryItem({
 
 export default function ProductsClient({ initialProducts = [], district = null, city = null }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlCategory = searchParams ? searchParams.get("category") : null;
+
   const [products, setProducts] = useState(initialProducts);
   const [categorySearch, setCategorySearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -148,6 +151,7 @@ export default function ProductsClient({ initialProducts = [], district = null, 
   const [pendingScroll, setPendingScroll] = useState(null);
   const [showTopButton, setShowTopButton] = useState(false);
   const [activeSubCategory, setActiveSubCategory] = useState("");
+
   // Client-side fallback to fetch products if server cache is empty (e.g. built offline)
   useEffect(() => {
     if (initialProducts && initialProducts.length > 0) {
@@ -245,6 +249,29 @@ export default function ProductsClient({ initialProducts = [], district = null, 
       categoryCounts: counts,
     };
   }, [products, productSearch]);
+
+  // Handle URL category parameter for direct navigation from Footer/Navbar
+  useEffect(() => {
+    if (!urlCategory) return;
+    const catKeys = Object.keys(sortedGroupedProducts);
+    if (catKeys.length === 0) return;
+
+    const matchedCategory = catKeys.find(
+      (cat) => cat.toLowerCase() === urlCategory.toLowerCase()
+    );
+
+    if (matchedCategory) {
+      setOpenedCategory(matchedCategory);
+      setActiveCategory(matchedCategory);
+      const catSlug = matchedCategory.replace(/\s+/g, "-").toLowerCase();
+      setTimeout(() => {
+        const el = document.getElementById(catSlug);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 250);
+    }
+  }, [urlCategory, sortedGroupedProducts]);
 
   const getCategoryProductCount = useCallback((categoryName) => {
     return categoryCounts[categoryName] || 0;

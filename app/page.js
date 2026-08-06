@@ -138,70 +138,18 @@ export default function Home({ city }) {
 useEffect(() => {
 
   const fetchProducts = async () => {
-
     try {
-
-      const categorySnap = await getDocs(
-        collection(
-          db,
-          "websites",
-          "humanbiomedicalin",
-          "pages",
-          "categoryproducts",
-          "categories"
-        )
-      );
-
-      let allProducts = [];
-
-      for (const categoryDoc of categorySnap.docs) {
-
-        const subCategorySnap = await getDocs(
-          collection(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "pages",
-            "categoryproducts",
-            "categories",
-            categoryDoc.id,
-            "subcategories"
-          )
-        );
-
-        subCategorySnap.forEach((subDoc) => {
-
-          const data = subDoc.data();
-
-          if (Array.isArray(data.products)) {
-
-            data.products.forEach((product) => {
-
-              if (product.isPublished) {
-                allProducts.push(product);
-              }
-
-            });
-
-          }
-
-        });
-
+      const { fetchFullCatalog } = await import("@/lib/data-fetcher");
+      const catalog = await fetchFullCatalog();
+      if (catalog && catalog.length > 0) {
+        setProducts(catalog.slice(0, 4));
       }
-
-      // Random 4 products
-      allProducts.sort(() => Math.random() - 0.5);
-
-      setProducts(allProducts.slice(0, 4));
-
     } catch (err) {
-      console.error(err);
+      console.error("Error loading featured products:", err);
     }
-
   };
 
   fetchProducts();
-
 }, [pathname]);
 
   const icons = ["🧪", "💊", "⚙️", "🔧", "🌍", "📊"];
@@ -360,65 +308,123 @@ useEffect(() => {
 
       </section>
 
-      {/*  FEATURED PRODUCTS */}
-      <section className="products-section fade-up">
-        <div className="container text-center">
-          <h6 className="section-subtitle">
-            Our Products
-          </h6>
-          <h2 className="section-title mb-5">
-            Featured Products
-          </h2>
-          <div className="row">
+      {/* FEATURED PRODUCTS */}
+      <section className="products-section fade-up py-5">
+        <div className="container">
+          <div className="text-center mb-5">
+            <span className="products-badge">
+              OUR PRODUCTS
+            </span>
+            <h2 className="section-title mb-2">
+              Featured Products & Solutions
+            </h2>
+            <p className="text-muted mx-auto" style={{ maxWidth: "600px", fontSize: "15px" }}>
+              Explore high-performance biomedical instruments, analyzers and medical devices engineered for laboratories & hospitals.
+            </p>
+          </div>
+
+          <div className="row g-4">
             {products.map((item, i) => (
               <div
-                className="col-lg-3 col-md-6 mb-4"
-                key={i}
+                className="col-lg-3 col-md-6 col-sm-12"
+                key={item.uid || item.slug || i}
               >
-                <div className="product-card h-100">
-
-                  {/*  IMAGE FIX */}
+                <div className="product-card h-100 d-flex flex-column">
+                  {/* IMAGE WRAPPER */}
                   <div className="product-img-wrapper">
+                    <span className="product-category-badge">
+                      {item.category || "Biomedical"}
+                    </span>
                     <img
                       src={
+                        item.images?.[0] ||
                         item.image ||
                         item.images?.[0]?.url ||
-                        item.images?.[0] ||
-                        "/no-image.png"
+                        "/placeholder.jpg"
                       }
                       className="product-img"
                       alt={item.title}
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.jpg";
+                      }}
                     />
                   </div>
 
-                  <div className="product-content">
-                    <h6>{item.title}</h6>
-                    <p>
-                      {item.desc?.slice(0, 50)}...
-                    </p>
+                  {/* CONTENT */}
+                  <div className="product-content d-flex flex-column flex-grow-1">
+                    <div>
+                      {item.brand && (
+                        <span className="product-brand-tag">
+                          {item.brand}
+                        </span>
+                      )}
+                      <h5 className="product-title" title={item.title}>
+                        {item.title}
+                      </h5>
+                      <p className="product-desc">
+                        {item.desc ||
+                          item.description ||
+                          "Premium laboratory and diagnostic medical equipment."}
+                      </p>
+                    </div>
 
-                    <Link href={makeLink("/items")}>
-
-                      <button className="btn product-btn w-100 view-btn">
-                        View Details
-                      </button>
-                    </Link>
+                    {/* ACTION BUTTON AT BOTTOM */}
+                    <div className="product-footer mt-auto pt-2">
+                      <Link
+                        href={makeLink(item.slug ? `/items/${item.slug}` : "/items")}
+                        className="w-100 text-decoration-none"
+                      >
+                        <button className="btn product-btn w-100 d-flex align-items-center justify-content-center gap-2">
+                          <span>View Details</span>
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                          </svg>
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          
-          <div className="mt-4">
 
-            {/* <button className="btn product-btn-main px-4">
-              View All Products
-            </button> */}
-
+          <div className="text-center mt-5">
+            <Link href={makeLink("/items")} className="text-decoration-none">
+              <button
+                className="btn px-4 py-2.5 rounded-pill font-semibold"
+                style={{
+                  border: "2px solid #d62828",
+                  color: "#d62828",
+                  fontWeight: "700",
+                  fontSize: "14px",
+                  background: "transparent",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#d62828";
+                  e.currentTarget.style.color = "#ffffff";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#d62828";
+                }}
+              >
+                Explore Full Product Catalog →
+              </button>
+            </Link>
           </div>
-
         </div>
-
       </section>
 
       {/*  ABOUT SECTION */}
