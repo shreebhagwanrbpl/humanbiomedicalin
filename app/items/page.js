@@ -1,5 +1,6 @@
 import { fetchFullCatalog, fetchProductBySlug } from "@/lib/items-data-fetcher";
 import ProductsClient from "./ProductsClient";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,10 +10,12 @@ export default async function ProductsPage({ district = null, city = null }) {
   const allProducts = await fetchFullCatalog(true);
 
   return (
-    <ProductsClient
-      initialProducts={allProducts}
-      district={district}
-      city={city}
-    />
+    <Suspense fallback={<div style={{ minHeight: "100vh", paddingTop: "120px" }} className="text-center">Loading Products...</div>}>
+      <ProductsClient
+        initialProducts={allProducts}
+        district={district}
+        city={city}
+      />
+    </Suspense>
   );
 }

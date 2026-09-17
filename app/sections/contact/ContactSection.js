@@ -363,9 +363,9 @@ export default function ContactSection({ city }) {
 
                   {loading
                     ? "Loading..."
-                    : getValue(
-                      "phone"
-                    )}
+                    : getValue("phone") !== "-"
+                      ? getValue("phone")
+                      : "+91 8112279728"}
 
                 </p>
 
