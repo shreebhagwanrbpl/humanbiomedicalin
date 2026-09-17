@@ -20,6 +20,7 @@ import {
   collection,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { fetchFullCatalog } from "@/lib/data-fetcher";
 import Modal from "react-modal";
 import {
   FiChevronDown,
@@ -337,94 +338,19 @@ export default function ProductsList({ city }) {
 
 
   useEffect(() => {
-
     const fetchProducts = async () => {
       try {
-
-        let allProducts = [];
-
-        // Other Products
-        const productsSnap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "pages",
-            "products"
-          )
-        );
-
-        if (productsSnap.exists()) {
-
-          const products =
-            productsSnap.data()?.products || [];
-
-          products
-            .filter((p) => p.isPublished)
-            .forEach((item, index) => {
-
-              allProducts.push({
-                ...item,
-                id: item.id || `other - ${index} `,
-                uid: `other - ${index} `,
-                slug: item.slug || makeSlug(item.title),
-                category: "Other Products"
-              });
-
-            });
-        }
-
-        // Dynamic Categories
-        const categorySnap = await getDocs(
-          collection(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "pages",
-            "categoryproducts",
-            "categories"
-          )
-        );
-
-        categorySnap.forEach((catDoc) => {
-
-          const catData = catDoc.data();
-
-          const catName =
-            catData.category ||
-            catDoc.id;
-
-          (catData.products || [])
-            .filter((p) => p.isPublished)
-            .forEach((item, index) => {
-
-              allProducts.push({
-                ...item,
-                id: item.id || `${catDoc.id} -${index} `,
-                uid: `${catDoc.id} -${index} `,
-                slug: item.slug || makeSlug(item.title),
-                category: catName,
-              });
-
-            });
-
-        });
-
-        setProducts(allProducts);
-
+        const catalog = await fetchFullCatalog(true);
+        const productList = Array.isArray(catalog) ? catalog : (catalog.products || []);
+        setProducts(productList);
       } catch (err) {
-
-        console.log(err);
-
+        console.error("[ProductsList] Error fetching catalog:", err);
       } finally {
-
         setLoadingProducts(false);
-
       }
     };
 
     fetchProducts();
-
   }, []);
 
   /* -----------------------------

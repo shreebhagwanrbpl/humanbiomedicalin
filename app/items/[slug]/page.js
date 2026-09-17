@@ -1,23 +1,36 @@
 import ProductDetails from "./ProductDetails";
-import { fetchFullCatalog } from "@/lib/data-fetcher-server";
+import { fetchFullCatalog, fetchProductBySlug } from "@/lib/items-data-fetcher";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({ params }) {
     const { slug } = await params;
+    const allProducts = await fetchFullCatalog(true);
+    const product = allProducts.find((p) => p.slug === slug) || null;
 
-    const productName = slug
+    if (!product) {
+        return {
+            title: "Product Not Found | Human Biomedical",
+            description: "The requested biomedical product was not found or is currently unavailable.",
+            robots: {
+                index: false,
+                follow: false,
+            },
+        };
+    }
+
+    const productName = product.title || slug
         ?.replace(/-/g, " ")
         ?.replace(/\b\w/g, (c) => c.toUpperCase());
 
-    const title = `${productName} Supplier in India | Price, Dealer & Distributor | Human Biomedicals`;
-
-    const description = `Buy ${productName} at best price in India. Trusted supplier, dealer and distributor of ${productName} for hospitals, laboratories, diagnostic centers, research institutes and healthcare facilities. Contact Human Biomedicals for latest quotation and product details.`;
-
+    const title = `${productName} Supplier in India | Price, Dealer & Distributor | Human Biomedical`;
+    const description = `Buy ${productName} at best price in India. Trusted supplier, dealer and distributor of ${productName} for hospitals, laboratories, diagnostic centers, research institutes and healthcare facilities. Contact Human Biomedical for latest quotation and product details.`;
     const url = `https://humanbiomedical.in/items/${slug}`;
 
     return {
         title,
         description,
-
         keywords: [
             productName,
             `${productName} Supplier`,
@@ -40,28 +53,24 @@ export async function generateMetadata({ params }) {
             "Diagnostic Equipment",
             "Hospital Equipment",
             "Healthcare Equipment",
-            "Human Biomedicals",
+            "Human Biomedical",
         ],
-
         alternates: {
             canonical: url,
         },
-
         openGraph: {
             title,
             description,
             url,
-            siteName: "Human Biomedicals",
+            siteName: "Human Biomedical",
             type: "website",
             locale: "en_IN",
         },
-
         twitter: {
             card: "summary_large_image",
             title,
             description,
         },
-
         robots: {
             index: true,
             follow: true,
@@ -73,14 +82,13 @@ export async function generateMetadata({ params }) {
                 "max-snippet": -1,
             },
         },
-
         metadataBase: new URL("https://humanbiomedical.in"),
     };
 }
 
 export default async function Page({ params }) {
     const { slug } = await params;
-    const allProducts = await fetchFullCatalog();
+    const allProducts = await fetchFullCatalog(true);
     const product = allProducts.find((p) => p.slug === slug) || null;
 
     return <ProductDetails slug={slug} product={product} />;

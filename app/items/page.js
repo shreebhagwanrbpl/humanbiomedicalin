@@ -1,11 +1,12 @@
-import { fetchFullCatalog } from "@/lib/data-fetcher-server";
+import { fetchFullCatalog, fetchProductBySlug } from "@/lib/items-data-fetcher";
 import ProductsClient from "./ProductsClient";
 
-export const revalidate = 3600; // Revalidate cache every hour
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ProductsPage({ district = null, city = null }) {
-  // Fetch full catalog from server cache
-  const allProducts = await fetchFullCatalog();
+  // Fetch full master catalog from server
+  const allProducts = await fetchFullCatalog(true);
 
   return (
     <ProductsClient

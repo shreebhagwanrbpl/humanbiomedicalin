@@ -4,6 +4,7 @@ import Hero from "./components/Hero";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { db } from "@/lib/firebase";
+import { fetchFullCatalog } from "@/lib/data-fetcher";
 import {
   doc,
   onSnapshot,
@@ -134,75 +135,22 @@ export default function Home({ city }) {
     return () => clearInterval(interval);
   }, [pathname]);
 
-  // FETCH PRODUCTS
-useEffect(() => {
-
-  const fetchProducts = async () => {
-
-    try {
-
-      const categorySnap = await getDocs(
-        collection(
-          db,
-          "websites",
-          "humanbiomedicalin",
-          "pages",
-          "categoryproducts",
-          "categories"
-        )
-      );
-
-      let allProducts = [];
-
-      for (const categoryDoc of categorySnap.docs) {
-
-        const subCategorySnap = await getDocs(
-          collection(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "pages",
-            "categoryproducts",
-            "categories",
-            categoryDoc.id,
-            "subcategories"
-          )
-        );
-
-        subCategorySnap.forEach((subDoc) => {
-
-          const data = subDoc.data();
-
-          if (Array.isArray(data.products)) {
-
-            data.products.forEach((product) => {
-
-              if (product.isPublished) {
-                allProducts.push(product);
-              }
-
-            });
-
-          }
-
-        });
-
+  // FETCH PRODUCTS FROM MASTER CATALOG
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const catalog = await fetchFullCatalog(true);
+        const productList = Array.isArray(catalog) ? [...catalog] : [...(catalog.products || [])];
+        // Display random 4 products from visible master catalog
+        productList.sort(() => Math.random() - 0.5);
+        setProducts(productList.slice(0, 4));
+      } catch (err) {
+        console.error("[Home] Error fetching master products:", err);
       }
+    };
 
-      // Random 4 products
-      allProducts.sort(() => Math.random() - 0.5);
-
-      setProducts(allProducts.slice(0, 4));
-
-    } catch (err) {
-      console.error(err);
-    }
-
-  };
-
-  fetchProducts();
-
-}, [pathname]);
+    fetchProducts();
+  }, [pathname]);
 
   const icons = ["🧪", "💊", "⚙️", "🔧", "🌍", "📊"];
 

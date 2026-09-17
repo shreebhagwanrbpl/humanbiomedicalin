@@ -19,7 +19,7 @@ import {
     collection,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { fetchFullCatalog } from "@/lib/data-fetcher";
+import { fetchProductBySlug } from "@/lib/data-fetcher";
 import "./page.css";
 
 export default function ProductDetails({ slug, product: initialProduct }) {
@@ -61,8 +61,7 @@ export default function ProductDetails({ slug, product: initialProduct }) {
         const loadProduct = async () => {
             try {
                 setLoading(true);
-                const allProducts = await fetchFullCatalog();
-                const found = allProducts.find((p) => p.slug === slug);
+                const found = await fetchProductBySlug(slug);
 
                 setProduct(found || null);
 
@@ -590,6 +589,30 @@ export default function ProductDetails({ slug, product: initialProduct }) {
                                     <br />
                                     {product.availability || "-"}
                                 </div>
+
+                                {product.parameters && (
+                                    <div className="col-6 mb-3">
+                                        <strong>Parameters</strong>
+                                        <br />
+                                        {product.parameters}
+                                    </div>
+                                )}
+
+                                {product.size && (
+                                    <div className="col-6 mb-3">
+                                        <strong>Size</strong>
+                                        <br />
+                                        {product.size}
+                                    </div>
+                                )}
+
+                                {product.price && (
+                                    <div className="col-6 mb-3">
+                                        <strong>Price</strong>
+                                        <br />
+                                        <span className="text-success fw-bold">₹{product.price}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

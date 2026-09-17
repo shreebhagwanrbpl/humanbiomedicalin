@@ -9,7 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import ProductCard from "../components/ProductCard";
-import { fetchFullCatalog } from "@/lib/data-fetcher";
+import { fetchFullCatalog, fetchProductBySlug } from "@/lib/items-data-fetcher";
 import "../sections/items/product.css";
 
 // 1. Memoized Product Link Component
@@ -148,18 +148,16 @@ export default function ProductsClient({ initialProducts = [], district = null, 
   const [pendingScroll, setPendingScroll] = useState(null);
   const [showTopButton, setShowTopButton] = useState(false);
   const [activeSubCategory, setActiveSubCategory] = useState("");
-  // Client-side fallback to fetch products if server cache is empty (e.g. built offline)
-  useEffect(() => {
-    if (initialProducts && initialProducts.length > 0) {
-      setProducts(initialProducts);
-      return;
-    }
 
+  // Always fetch fresh catalog on client mount to reflect visibility changes instantly
+  useEffect(() => {
+    let isMounted = true;
     const loadProductsOnClient = async () => {
       try {
-        const data = await fetchFullCatalog();
-        if (data && data.length > 0) {
-          setProducts(data);
+        const data = await fetchFullCatalog(true);
+        const list = Array.isArray(data) ? data : (data?.products || []);
+        if (isMounted && list && Array.isArray(list)) {
+          setProducts(list);
         }
       } catch (err) {
         console.error("[ProductsClient] Error loading catalog on client:", err);
@@ -167,7 +165,11 @@ export default function ProductsClient({ initialProducts = [], district = null, 
     };
 
     loadProductsOnClient();
-  }, [initialProducts]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Debounce search term updates to make search typing instant
   useEffect(() => {
@@ -312,17 +314,6 @@ export default function ProductsClient({ initialProducts = [], district = null, 
       behavior: "smooth",
     });
   };
-
-  // Measure hydration completion time
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.performance) {
-      const navigationStart = window.performance.timing?.navigationStart || 0;
-      if (navigationStart) {
-        const timeSinceNavigation = Date.now() - navigationStart;
-        console.log(`[ProductsClient] Hydration completed in ${timeSinceNavigation}ms since navigation start`);
-      }
-    }
-  }, []);
 
   return (
     <>
@@ -492,7 +483,7 @@ export default function ProductsClient({ initialProducts = [], district = null, 
                       setSearchInput("");
                       setProductSearch("");
                     }}
-                    className="mt-4 px-6 py-2.5 rounded-lg bg-# text-white font-semibold hover:bg-red-700 transition cursor-pointer border-0"
+                    className="mt-4 px-6 py-2.5 rounded-lg !bg-red-600 !text-white font-semibold hover:bg-red-700 transition cursor-pointer border-0"
                   >
                     View All Products
                   </button>
