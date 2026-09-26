@@ -12,15 +12,7 @@ import {
   useMemo,
 } from "react";
 import "../items/product.css";
-import {
-  doc,
-  getDocs,
-  getDoc,
-  addDoc,
-  collection,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { fetchFullCatalog } from "@/lib/data-fetcher";
+import { fetchFullCatalog, fetchDistrictData } from "@/lib/data-fetcher";
 import Modal from "react-modal";
 import {
   FiChevronDown,
@@ -189,46 +181,17 @@ export default function ProductsList({ city }) {
         }
 
         try {
-
-          const snap =
-            await getDoc(
-
-              doc(
-
-                db,
-
-                "websites",
-
-                "humanbiomedicalin",
-
-                "districts",
-
-                slug
-
-              )
-
-            );
-
-          if (snap.exists()) {
-
+          const data = await fetchDistrictData(slug);
+          if (data) {
             setCurrentCity(slug);
-
             setIsValidCity(true);
-
           } else {
-
             setCurrentCity("");
-
             setIsValidCity(false);
-
           }
-
         } catch {
-
           setCurrentCity("");
-
           setIsValidCity(false);
-
         }
 
       };
@@ -634,41 +597,32 @@ export default function ProductsList({ city }) {
 
         }
 
-        await addDoc(
-
-          collection(
-
-            db,
-
-            "websitesQueries",
-
-            "humanbiomedicalin",
-
-            "productQueries"
-
-          ),
-
-          {
-
+        const res = await fetch("/api/product-query", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
             city: cityName,
-
-            productName:
-              selected?.title || "",
-
+            productName: selected?.title || "",
+            productSlug: selected?.slug || "",
+            productId: selected?.id || selected?.uid || "",
             email,
-
             phone,
+            websiteId: "humanbiomedicalin",
+            companyId: "human",
+          }),
+        });
 
-            createdAt:
-              new Date(),
-
-          }
-
-        );
-
-        toast.success(
-          "Query submitted successfully"
-        );
+        if (res.ok) {
+          toast.success(
+            "Query submitted successfully"
+          );
+        } else {
+          toast.error(
+            "Failed to submit query"
+          );
+        }
 
         setQueryForm({
 

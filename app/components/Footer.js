@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,6 +10,7 @@ import {
   FaLinkedin,
   FaYoutube,
 } from "react-icons/fa";
+import { fetchContactData, fetchDistrictData, fetchFullCatalog } from "@/lib/data-fetcher";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -60,21 +59,16 @@ export default function Footer() {
   useEffect(() => {
     const fetchContact = async () => {
       try {
-        const snap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "pages",
-            "contact"
-          )
-        );
-
-        if (snap.exists()) {
-          setContactInfo(snap.data().contactInfo || []);
+        const data = await fetchContactData();
+        if (data) {
+          if (Array.isArray(data.contactInfo)) {
+            setContactInfo(data.contactInfo);
+          } else if (Array.isArray(data)) {
+            setContactInfo(data);
+          }
         }
       } catch (err) {
-        console.log(err);
+        console.error("Error loading contact info in footer:", err);
       }
     };
 
@@ -84,11 +78,11 @@ export default function Footer() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const { fetchFullCatalog } = await import("@/lib/data-fetcher");
         const catalog = await fetchFullCatalog();
-        if (catalog && catalog.length > 0) {
+        const productList = Array.isArray(catalog) ? catalog : (catalog.products || []);
+        if (productList && productList.length > 0) {
           const catMap = {};
-          catalog.forEach((item) => {
+          productList.forEach((item) => {
             if (item.category && item.category !== "Other Products") {
               catMap[item.category] = (catMap[item.category] || 0) + 1;
             }
@@ -109,21 +103,12 @@ export default function Footer() {
       if (!citySlug) return;
 
       try {
-        const snap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "districts",
-            citySlug
-          )
-        );
-
-        if (snap.exists()) {
-          setStateName(snap.data()?.state || "");
+        const data = await fetchDistrictData(citySlug);
+        if (data) {
+          setStateName(data?.state || "");
         }
       } catch (err) {
-        console.log(err);
+        console.error("Error loading district in footer:", err);
       }
     };
 
@@ -141,6 +126,12 @@ export default function Footer() {
       })?.value || "-"
     );
   };
+
+  const mapAddress = district && stateName
+    ? `${city}, ${stateName}, India`
+    : getValue("address") !== "-"
+      ? getValue("address")
+      : "";
 
   return (
     <footer className="footer-container text-white pt-5 pb-3">
@@ -297,7 +288,7 @@ export default function Footer() {
             </h6>
 
             <ul className="list-unstyled text-secondary">
-              {activeCategories.length > 0 ? (
+              {activeCategories.length > 0 &&
                 activeCategories.slice(0, 6).map((cat) => (
                   <li key={cat} className="mb-2">
                     <Link
@@ -307,31 +298,7 @@ export default function Footer() {
                       <span style={{ color: "#d62828", fontWeight: "bold" }}>›</span> {cat}
                     </Link>
                   </li>
-                ))
-              ) : (
-                <>
-                  <li className="mb-2">
-                    <Link href={`${makeLink("/items")}?category=Biochemistry%20Analyzer`} className="category-footer-link">
-                      <span style={{ color: "#d62828", fontWeight: "bold" }}>›</span> Biochemistry Analyzer
-                    </Link>
-                  </li>
-                  <li className="mb-2">
-                    <Link href={`${makeLink("/items")}?category=Hematology%20Analyzer`} className="category-footer-link">
-                      <span style={{ color: "#d62828", fontWeight: "bold" }}>›</span> Hematology Analyzer
-                    </Link>
-                  </li>
-                  <li className="mb-2">
-                    <Link href={`${makeLink("/items")}?category=Electrolyte%20Analyzer`} className="category-footer-link">
-                      <span style={{ color: "#d62828", fontWeight: "bold" }}>›</span> Electrolyte Analyzer
-                    </Link>
-                  </li>
-                  <li className="mb-2">
-                    <Link href={`${makeLink("/items")}?category=Immunology%20Analyzer`} className="category-footer-link">
-                      <span style={{ color: "#d62828", fontWeight: "bold" }}>›</span> Immunology Analyzer
-                    </Link>
-                  </li>
-                </>
-              )}
+                ))}
               {activeCategories.length > 6 && (
                 <li className="mt-2">
                   <Link
@@ -356,23 +323,23 @@ export default function Footer() {
               📍{" "}
               {district && stateName
                 ? `${city}, ${stateName}, India`
-                : getValue("address")}
+                : getValue("address") !== "-"
+                  ? getValue("address")
+                  : "India"}
             </p>
 
-            <p className="text-secondary small mb-2">
-              📞 {getValue("phone") !== "-" ? getValue("phone") : "+91 8112279728"}
-            </p>
+            {getValue("phone") !== "-" && (
+              <p className="text-secondary small mb-2">
+                📞 {getValue("phone")}
+              </p>
+            )}
 
             {/* LOCATION MAP (Hidden on contact page to prevent duplicate maps) */}
-            {!isContactPage && (
+            {!isContactPage && mapAddress && (
               <div className="mt-3">
                 <iframe
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                    district && stateName
-                      ? `${city}, ${stateName}, India`
-                      : getValue("address") && getValue("address") !== "-"
-                        ? getValue("address")
-                        : "Amrapali, Vaishali Nagar, Jaipur, Rajasthan 302021"
+                    mapAddress
                   )}&output=embed`}
                   width="100%"
                   height="130"

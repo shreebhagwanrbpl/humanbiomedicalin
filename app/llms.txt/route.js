@@ -1,71 +1,18 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
-
-const COMPANY_ID = "human";
-const WEBSITE = "humanbiomedicalin";
-const DOMAIN = "https://humanbiomedical.in";
+import { fetchAdminDistricts, fetchAdminCatalog } from "@/lib/admin-api";
+import { COMPANY_NAME, DOMAIN, WEBSITE_ID } from "@/lib/companyConfig";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        if (!adminDb) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: "Firestore is not initialized. Check firebaseAdmin.js and your ENV variables."
-                },
-                {
-                    status: 500,
-                }
-            );
-        }
+        const [catalog, districts] = await Promise.all([
+            fetchAdminCatalog({ websiteId: WEBSITE_ID }),
+            fetchAdminDistricts({ websiteId: WEBSITE_ID }),
+        ]);
 
-        console.log("✅ Firestore Connected for llms.txt");
-
-        // Districts from website
-        const districtSnap = await adminDb
-            .collection("websites")
-            .doc(WEBSITE)
-            .collection("districts")
-            .get();
-
-        const districts = districtSnap.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-
-        // Master Products from companies/human/products
-        const productSnap = await adminDb
-            .collection("companies")
-            .doc(COMPANY_ID)
-            .collection("products")
-            .get();
-
-        const allProducts = productSnap.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-
-        // Filter visible published products for humanbiomedicalin
-        const publishedProducts = allProducts.filter((p) => {
-            if (p.isPublished === false || p.status === "inactive") return false;
-            const wIds = p.websiteIds;
-            if (!Array.isArray(wIds) || wIds.length === 0) return false;
-            return wIds.includes("all") || wIds.includes(WEBSITE) || wIds.includes("humanbiomedical.in");
-        });
-
-        // Master Categories from companies/human/categories
-        const categorySnap = await adminDb
-            .collection("companies")
-            .doc(COMPANY_ID)
-            .collection("categories")
-            .get();
-
-        const categories = categorySnap.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
+        const publishedProducts = Array.isArray(catalog) ? catalog : (catalog.products || []);
+        const categories = catalog.categories || [];
 
         // ===========================
         // Categories text
@@ -166,7 +113,7 @@ ${[product.title || product.name, product.brand, product.category, product.model
         // ===========================
         const districtText =
             districts.length > 0
-                ? districts.map((item) => `${DOMAIN}/${item.slug}`).join("\n")
+                ? districts.map((item) => `${DOMAIN}/${item.slug || item.id}`).join("\n")
                 : "No Districts Found";
 
         // ===========================
@@ -184,7 +131,7 @@ ${categories.length}
 Districts:
 ${districts.length}
 
-# Human Biomedical
+# ${COMPANY_NAME}
 
 India's Trusted Biomedical Equipment Company
 

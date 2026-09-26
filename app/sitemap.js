@@ -1,9 +1,10 @@
-import { adminDb } from "@/lib/firebase-admin";
+import { fetchAdminDistricts, fetchAdminCatalog } from "@/lib/admin-api";
+import { DOMAIN } from "@/lib/companyConfig";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap() {
-  const baseUrl = "https://humanbiomedical.in";
+  const baseUrl = DOMAIN || "https://humanbiomedical.in";
 
   const staticPages = [
     "",
@@ -16,53 +17,29 @@ export default async function sitemap() {
   }));
 
   try {
-    // DEBUG
-    if (!process.env.FIREBASE_PROJECT_ID) {
-      throw new Error("❌ FIREBASE_PROJECT_ID missing");
-    }
-
-    if (!process.env.FIREBASE_CLIENT_EMAIL) {
-      throw new Error("❌ FIREBASE_CLIENT_EMAIL missing");
-    }
-
-    if (!process.env.FIREBASE_PRIVATE_KEY) {
-      throw new Error("❌ FIREBASE_PRIVATE_KEY missing");
-    }
-
-    if (!adminDb) {
-      throw new Error("❌ adminDb NULL");
-    }
-
-    const snapshot = await adminDb
-      .collection("websites")
-      .doc("humanbiomedicalin")
-      .collection("districts")
-      .get();
-
-    const districtPages = snapshot.docs.flatMap((doc) => {
-      const slug = doc.id;
+    const districts = await fetchAdminDistricts();
+    const districtPages = (districts || []).flatMap((d) => {
+      const slug = d.slug || d.id;
+      if (!slug) return [];
 
       return [
-        { url: `${baseUrl}/${slug}` },
-        { url: `${baseUrl}/${slug}/about` },
-        { url: `${baseUrl}/${slug}/items` },
-        { url: `${baseUrl}/${slug}/contact` },
+        { url: `${baseUrl}/${slug}`, lastModified: new Date() },
+        { url: `${baseUrl}/${slug}/about`, lastModified: new Date() },
+        { url: `${baseUrl}/${slug}/items`, lastModified: new Date() },
+        { url: `${baseUrl}/${slug}/contact`, lastModified: new Date() },
       ];
     });
 
-    return [...staticPages, ...districtPages];
+    const products = await fetchAdminCatalog();
+    const productList = Array.isArray(products) ? products : (products.products || []);
+    const productPages = productList.map((p) => ({
+      url: `${baseUrl}/items/${p.slug || p.id}`,
+      lastModified: new Date(),
+    }));
+
+    return [...staticPages, ...districtPages, ...productPages];
   } catch (error) {
     console.error("SITEMAP ERROR:", error);
-
-    // TEMPORARY: error browser me dikhega
-    return [
-      ...staticPages,
-      {
-        url: `${baseUrl}/debug-${encodeURIComponent(
-          error.message
-        )}`,
-        lastModified: new Date(),
-      },
-    ];
+    return staticPages;
   }
 }
