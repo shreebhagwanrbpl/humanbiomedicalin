@@ -425,7 +425,7 @@ export default function ProductsClient({ initialProducts = [], district = null, 
                   <div className="sidebar-search">
                     <input
                       type="text"
-                      placeholder="Search categories..."
+                      placeholder="Search categories..." suppressHydrationWarning
                       value={categorySearch}
                       onChange={(e) => setCategorySearch(e.target.value)}
                     />
