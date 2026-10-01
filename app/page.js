@@ -1,88 +1,55 @@
 "use client";
 import Hero from "./components/Hero";
-// import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { db } from "@/lib/firebase";
-import { fetchFullCatalog } from "@/lib/data-fetcher";
 import {
-  doc,
-  onSnapshot,
-  getDoc,
-  collection,
-  getDocs,
-} from "firebase/firestore";
+  fetchFullCatalog,
+  fetchHomeData,
+  fetchServicesData,
+  fetchDistrictData,
+} from "@/lib/data-fetcher";
 import Link from "next/link";
-
-// import toast from "react-hot-toast";
 import Image from "next/image";
 import "./globals.css";
 
-
-
 export default function Home({ city }) {
-
   const pathname = usePathname();
   const pathParts = pathname
     .split("/")
     .filter(Boolean);
-  // current city
-  // const currentCity = city || "";
+
   const [currentCity, setCurrentCity] = useState("");
   const [isValidCity, setIsValidCity] = useState(false);
   const [cityLoading, setCityLoading] = useState(true);
 
-
   useEffect(() => {
-    const checkDistrict =
-      async () => {
-        const slug =
-          pathParts[0];
-        if (!slug) {
+    const checkDistrict = async () => {
+      const slug = pathParts[0];
+      if (!slug) {
+        setCurrentCity("");
+        setIsValidCity(false);
+        setCityLoading(false);
+        return;
+      }
+
+      try {
+        const data = await fetchDistrictData(slug);
+        if (data) {
+          setCurrentCity(slug);
+          setIsValidCity(true);
+        } else {
           setCurrentCity("");
           setIsValidCity(false);
-          setCityLoading(false);
-          return;
         }
-
-        try {
-
-          const snap = await getDoc(
-            doc(
-              db,
-              "websites",
-              "humanbiomedicalin",
-              "districts",
-              slug
-            )
-          );
-
-          // valid city
-          if (snap.exists()) {
-
-            setCurrentCity(slug);
-            setIsValidCity(true);
-
-          } else {
-
-            // invalid city
-            setCurrentCity("");
-            setIsValidCity(false);
-
-          }
-          setCityLoading(false);
-        } catch {
-
-          setCurrentCity("");
-          setIsValidCity(false);
-          setCityLoading(false);
-
-        }
-
-      };
+        setCityLoading(false);
+      } catch {
+        setCurrentCity("");
+        setIsValidCity(false);
+        setCityLoading(false);
+      }
+    };
 
     checkDistrict();
-
   }, [pathname]);
 
   // format city
@@ -109,15 +76,18 @@ export default function Home({ city }) {
   const [services, setServices] = useState([]);
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
-  //  FIX BLANK PAGE AFTER NAVIGATION
+
+  // FIX BLANK PAGE AFTER NAVIGATION
   useEffect(() => {
     setMounted(true);
     window.scrollTo(0, 0);
   }, [pathname]);
+
   const makeLink = (path = "") => {
     if (!citySlug) return path || "/";
     return `/${citySlug}${path}`;
   };
+
   // COUNTER
   useEffect(() => {
     const target = [500, 200, 15, 24];
@@ -154,56 +124,40 @@ export default function Home({ city }) {
 
   const icons = ["🧪", "💊", "⚙️", "🔧", "🌍", "📊"];
 
-  //  SERVICES
+  // SERVICES
   useEffect(() => {
-
-    const unsub = onSnapshot(
-      doc(
-        db,
-        "websites",
-        "humanbiomedicalin",
-        "pages",
-        "services"
-      ),
-      (snap) => {
-
-        if (snap.exists()) {
-          setServices(snap.data().services || []);
+    const loadServices = async () => {
+      try {
+        const sData = await fetchServicesData();
+        if (sData && Array.isArray(sData.services)) {
+          setServices(sData.services);
+        } else if (Array.isArray(sData)) {
+          setServices(sData);
         }
-
+      } catch (err) {
+        console.error("[Home] Error fetching services data:", err);
       }
-    );
+    };
 
-    return () => unsub();
-
+    loadServices();
   }, [pathname]);
 
   // HOME DATA
   useEffect(() => {
-
-    const unsub = onSnapshot(
-      doc(
-        db,
-        "websites",
-        "humanbiomedicalin",
-        "pages",
-        "home"
-      ),
-      (docSnap) => {
-
-        if (docSnap.exists()) {
-          setData(docSnap.data());
+    const loadHomeData = async () => {
+      try {
+        const hData = await fetchHomeData();
+        if (hData) {
+          setData(hData);
         }
-
+      } catch (err) {
+        console.error("[Home] Error fetching home data:", err);
+      } finally {
         setLoading(false);
-
-
-
       }
-    );
+    };
 
-    return () => unsub();
-
+    loadHomeData();
   }, [pathname]);
   if (loading || cityLoading) {
     return (

@@ -3,11 +3,10 @@
 import "./contact.css";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { db } from "@/lib/firebase";
-
-import { doc, getDoc, collection, addDoc, } from "firebase/firestore";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { fetchContactData, fetchDistrictData } from "@/lib/data-fetcher";
+
 export default function ContactSection({ city }) {
   const pathname = usePathname();
 
@@ -15,18 +14,12 @@ export default function ContactSection({ city }) {
     .split("/")
     .filter(Boolean);
 
-  const [currentCity, setCurrentCity] =
-    useState("");
-
-  const [isValidCity, setIsValidCity] =
-    useState(false);
-  const [contactInfo, setContactInfo] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-  const [mounted, setMounted] =
-    useState(false);
+  const [currentCity, setCurrentCity] = useState("");
+  const [isValidCity, setIsValidCity] = useState(false);
+  const [contactInfo, setContactInfo] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -34,11 +27,8 @@ export default function ContactSection({ city }) {
     message: "",
   });
 
-  // current city
-  // const currentCity = city || "jaipur";
-  const [stateName, setStateName] =
-    useState("");
-  // format city
+  const [stateName, setStateName] = useState("");
+
   const formatCity = (name = "") =>
     name
       .split("-")
@@ -53,127 +43,70 @@ export default function ContactSection({ city }) {
     ?.toLowerCase()
     ?.replace(/\s+/g, "-");
 
-  const cityName =
-    formatCity(currentCity);
+  const cityName = formatCity(currentCity);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
   useEffect(() => {
+    const checkDistrict = async () => {
+      const slug = pathParts[0];
+      setStateName("");
 
-    const checkDistrict =
-      async () => {
-
-        const slug =
-          pathParts[0];
-
-        setStateName("");
-
-        // no slug
-        if (!slug) {
-
-          setCurrentCity("");
-          setIsValidCity(false);
-
-          return;
-
-        }
-
-        try {
-
-          const snap = await getDoc(
-            doc(
-              db,
-              "websites",
-              "humanbiomedicalin",
-              "districts",
-              slug
-            )
-          );
-
-          // valid city
-          if (snap.exists()) {
-
-            const data =
-              snap.data();
-
-            setCurrentCity(slug);
-
-            setStateName(
-              data?.state || ""
-            );
-
-            setIsValidCity(true);
-
-          } else {
-
-            // invalid city
-            setCurrentCity("");
-            setIsValidCity(false);
-
-          }
-
-        } catch {
-
-          setCurrentCity("");
-          setIsValidCity(false);
-
-        }
-
-      };
-
-    checkDistrict();
-
-  }, [pathname]);
-  // LOAD CONTACT INFO
-  useEffect(() => {
-
-    const fetchData = async () => {
-
-      try {
-
-        const snap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalin",
-            "pages",
-            "contact"
-          )
-        );
-
-        if (snap.exists()) {
-
-          setContactInfo(
-            snap.data().contactInfo || []
-          );
-
-        }
-
-      } catch (err) {
-
-        console.log(err);
-
-      } finally {
-
-        setLoading(false);
-
+      if (!slug) {
+        setCurrentCity("");
+        setIsValidCity(false);
+        return;
       }
 
+      try {
+        const data = await fetchDistrictData(slug);
+        if (data) {
+          setCurrentCity(slug);
+          setStateName(data?.state || "");
+          setIsValidCity(true);
+        } else {
+          setCurrentCity("");
+          setIsValidCity(false);
+        }
+      } catch {
+        setCurrentCity("");
+        setIsValidCity(false);
+      }
+    };
+
+    checkDistrict();
+  }, [pathname]);
+
+  // LOAD CONTACT INFO
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchContactData();
+        if (data) {
+          if (Array.isArray(data.contactInfo)) {
+            setContactInfo(data.contactInfo);
+          } else if (Array.isArray(data)) {
+            setContactInfo(data);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching contact data:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
-
   }, []);
 
   // HANDLE CHANGE
   const handleChange = (e) => {
-
     setForm({
       ...form,
-      [e.target.name]:
-        e.target.value,
+      [e.target.name]: e.target.value,
     });
-
   };
 
   // SUBMIT
@@ -192,262 +125,217 @@ export default function ContactSection({ city }) {
 
     // Name validation
     if (name.length < 2) {
-      return toast.error(
-        "Please enter a valid name"
-      );
+      return toast.error("Please enter a valid name");
     }
 
     // Email validation
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return toast.error(
-        "Please enter a valid email address"
-      );
+      return toast.error("Please enter a valid email address");
     }
 
     // Phone validation
-    const phoneRegex =
-      /^[6-9]\d{9}$/;
-
+    const phoneRegex = /^[6-9]\d{9}$/;
     if (!phoneRegex.test(phone)) {
-      return toast.error(
-        "Please enter a valid 10 digit mobile number"
-      );
+      return toast.error("Please enter a valid 10 digit mobile number");
     }
 
     // Message validation
     if (message.length < 10) {
-      return toast.error(
-        "Message must be at least 10 characters"
-      );
+      return toast.error("Message must be at least 10 characters");
     }
 
     try {
-      await addDoc(
-        collection(
-          db,
-          "websitesQueries",
-          "humanbiomedicalin",
-          "contactQueries"
-        ),
-        {
+      setSubmitting(true);
+      const res = await fetch("/api/contact-query", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           name,
           email,
           phone,
           message,
           city: cityName,
-          createdAt: new Date(),
-        }
-      );
-
-      toast.success(
-        "Message Sent Successfully"
-      );
-
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        message: "",
+          district: currentCity,
+          websiteId: "humanbiomedicalin",
+          companyId: "human",
+        }),
       });
+
+      if (res.ok) {
+        toast.success("Message Sent Successfully");
+        setForm({
+          name: "",
+          email: "",
+          phone: "",
+          message: "",
+        });
+      } else {
+        toast.error("Failed to send message");
+      }
     } catch (err) {
-      console.log(err);
-      toast.error(
-        "Failed to send message"
-      );
+      console.error(err);
+      toast.error("Failed to send message");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   // HELPERS
   const getValue = (key) => {
-
     return (
       contactInfo.find((x) => {
-
-        const label =
-          x.label?.toLowerCase();
-
+        const label = x.label?.toLowerCase();
         return (
           label?.includes(key) ||
-          (key === "address" &&
-            label?.includes(
-              "location"
-            ))
+          (key === "address" && label?.includes("location"))
         );
-
       })?.value || "-"
     );
-
   };
+
   if (!mounted || loading) {
     return (
       <div className="page-loader">
         <div className="loader-circle"></div>
-
         <h2>Human Biomedical</h2>
-
         <p>Loading amazing healthcare solutions...</p>
       </div>
     );
   }
-  return (
-    <><Toaster position="top-right" reverseOrder={false} />
-      <div>
 
-        {/* baaki code */}
+  const mapAddress = isValidCity
+    ? `${cityName}, ${stateName}, India`
+    : getValue("address") !== "-"
+      ? getValue("address")
+      : "";
+
+  return (
+    <>
+      <Toaster position="top-right" reverseOrder={false} />
+      <div>
         {/* HERO */}
         <section className="contact-hero text-center">
-
           <div className="container">
-
             <div className="contact-badge">
               Get In Touch
             </div>
 
             <h1 className="contact-title">
               Contact <span>Experts</span>
-
-              {isValidCity && (
-                <> in {cityName}</>
-              )}
+              {isValidCity && <> in {cityName}</>}
             </h1>
 
             <p className="contact-subtitle">
               Get expert assistance for laboratory,
               diagnostic and medical equipment solutions
-
-              {isValidCity && (
-                <> in {cityName}</>
-              )}
+              {isValidCity && <> in {cityName}</>}
             </p>
-
           </div>
-
         </section>
 
         {/* CONTACT INFO */}
         <section className="container py-5">
-
           <div className="row g-4">
-
             {/* LOCATION */}
             <div className="col-md-4">
-
               <div className="contact-card">
-
                 <h5>📍 Location</h5>
-
                 <p>
-
                   {loading
                     ? "Loading..."
                     : isValidCity
                       ? `${cityName}, ${stateName}, India`
-                      : getValue("address")}
+                      : getValue("address") !== "-"
+                        ? getValue("address")
+                        : "India"}
                 </p>
-
               </div>
-
             </div>
 
             {/* PHONE */}
             <div className="col-md-4">
-
               <div className="contact-card">
-
                 <h5>📞 Phone</h5>
-
                 <p>
-
                   {loading
                     ? "Loading..."
                     : getValue("phone") !== "-"
                       ? getValue("phone")
-                      : "+91 8112279728"}
-
+                      : "-"}
                 </p>
-
               </div>
-
             </div>
 
             {/* EMAIL */}
             <div className="col-md-4">
-
               <div className="contact-card">
-
                 <h5>✉ Email</h5>
-
                 <p>
-
                   {loading
                     ? "Loading..."
-                    : getValue(
-                      "email"
-                    )}
-
+                    : getValue("email") !== "-"
+                      ? getValue("email")
+                      : "-"}
                 </p>
-
               </div>
-
             </div>
-
           </div>
-
         </section>
 
         {/* MAP + FORM */}
         <section className="container py-5">
-
           <div className="row g-5">
-
             {/* MAP */}
             <div className="col-md-6">
-
-              <iframe
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                  isValidCity
-                    ? `${cityName}, ${stateName}, India`
-                    : getValue("address")
-                )}&output=embed`}
-                width="100%"
-                height="450"
-                style={{
-                  border: 0,
-                  borderRadius: "20px",
-                  boxShadow: "0 15px 35px rgba(0,0,0,.08)"
-                }}
-                loading="lazy"
-              />
-
+              {mapAddress ? (
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                    mapAddress
+                  )}&output=embed`}
+                  width="100%"
+                  height="450"
+                  style={{
+                    border: 0,
+                    borderRadius: "20px",
+                    boxShadow: "0 15px 35px rgba(0,0,0,.08)"
+                  }}
+                  loading="lazy"
+                />
+              ) : (
+                <div
+                  style={{
+                    height: "450px",
+                    borderRadius: "20px",
+                    background: "#f8fafc",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #e2e8f0"
+                  }}
+                >
+                  <p className="text-secondary m-0">Human Biomedical</p>
+                </div>
+              )}
             </div>
 
             {/* FORM */}
             <div className="col-md-6">
-
               <div className="contact-form">
-
                 <h4 className="mb-3">
                   Send a Message
                 </h4>
 
-                <form
-                  onSubmit={
-                    handleSubmit
-                  }
-                >
-
+                <form onSubmit={handleSubmit}>
                   <input
                     type="text"
                     name="name"
                     placeholder="Your Name"
                     className="form-control mb-3"
                     value={form.name}
-                    onChange={
-                      handleChange
-                    }
+                    onChange={handleChange}
                     required
                   />
 
@@ -470,10 +358,7 @@ export default function ContactSection({ city }) {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        phone: e.target.value.replace(
-                          /\D/g,
-                          ""
-                        ),
+                        phone: e.target.value.replace(/\D/g, ""),
                       })
                     }
                     required
@@ -486,28 +371,22 @@ export default function ContactSection({ city }) {
                     className="form-control mb-3"
                     rows="4"
                     value={form.message}
-                    onChange={
-                      handleChange
-                    }
+                    onChange={handleChange}
                     required
                   ></textarea>
 
-                  <button className="btn btn-dark w-100">
-
-                    Send Message
-
+                  <button
+                    className="btn btn-dark w-100"
+                    type="submit"
+                    disabled={submitting}
+                  >
+                    {submitting ? "Sending Message..." : "Send Message"}
                   </button>
-
                 </form>
-
               </div>
-
             </div>
-
           </div>
-
         </section>
-
       </div>
     </>
   );
