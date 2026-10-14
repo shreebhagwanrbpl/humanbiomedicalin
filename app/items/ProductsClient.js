@@ -1,26 +1,40 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback, memo } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Toaster } from "react-hot-toast";
 import {
   Search,
   ChevronRight,
+  ExternalLink,
 } from "lucide-react";
-import ProductCard from "../components/ProductCard";
 import { fetchFullCatalog, fetchProductBySlug } from "@/lib/items-data-fetcher";
 import "../sections/items/product.css";
 
 // 1. Memoized Product Link Component
-const ProductLink = memo(function ProductLink({ item, category, scrollToProduct }) {
+const ProductLink = memo(function ProductLink({ item, category, scrollToProduct, district }) {
+  const targetUrl = district ? `/${district}/items/${item.slug}` : `/items/${item.slug}`;
+
   return (
-    <button
-      onClick={() => scrollToProduct(item.slug, category)}
-      className="product-link cursor-pointer border-0 bg-transparent text-start w-100"
-    >
-      {item.title}
-    </button>
+    <div className="product-link-row flex items-center justify-between group py-1 px-1.5 rounded transition-colors">
+      <button
+        type="button"
+        onClick={() => scrollToProduct(item.slug, category)}
+        className="product-link cursor-pointer border-0 bg-transparent text-start flex-1 py-1 px-1 text-xs text-slate-700 hover:text-red-600 transition-colors truncate"
+        title={`Scroll to ${item.title}`}
+      >
+        {item.title}
+      </button>
+      <Link
+        href={targetUrl}
+        className="product-link-arrow opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 p-1 transition-opacity text-xs flex-shrink-0"
+        title={`Open ${item.title} details`}
+      >
+        <ChevronRight size={13} />
+      </Link>
+    </div>
   );
 });
 
@@ -32,11 +46,13 @@ const SubCategoryItem = memo(function SubCategoryItem({
   isSubOpened,
   toggleSubCategory,
   scrollToProduct,
+  district,
 }) {
   return (
     <div className="relative space-y-2 pl-2">
       {/* Subcategory Header */}
       <button
+        type="button"
         onClick={() => toggleSubCategory(category, subCategory)}
         className="subcategory-btn w-full text-left py-1.5 flex justify-between items-center text-xs font-bold text-red-600 hover:text-red-700 transition-colors uppercase tracking-wider border-b border-slate-100 pb-1 cursor-pointer border-0"
       >
@@ -53,19 +69,20 @@ const SubCategoryItem = memo(function SubCategoryItem({
 
       {/* Product List Wrapper */}
       <div
-        className={`pl-3 ${isSubOpened
+        className={`pl-2 ${isSubOpened
           ? "block mt-1 mb-2"
           : "hidden"
           }`}
       >
         {isSubOpened && (
-          <div className="space-y-1.5 pr-1">
+          <div className="space-y-1 pr-1">
             {subList.map((item) => (
               <ProductLink
-                key={item.uid}
+                key={item.uid || item.id || item.slug}
                 item={item}
                 category={category}
                 scrollToProduct={scrollToProduct}
+                district={district}
               />
             ))}
           </div>
@@ -86,10 +103,12 @@ const CategoryItem = memo(function CategoryItem({
   toggleSubCategory,
   openedSubCategories,
   scrollToProduct,
+  district,
 }) {
   return (
     <div className="category-item relative">
       <button
+        type="button"
         onClick={() => toggleCategory(category)}
         className={`category-btn ${isActive ? "active" : ""}`}
       >
@@ -126,6 +145,7 @@ const CategoryItem = memo(function CategoryItem({
                   isSubOpened={isSubOpened}
                   toggleSubCategory={toggleSubCategory}
                   scrollToProduct={scrollToProduct}
+                  district={district}
                 />
               );
             })}
@@ -278,51 +298,119 @@ export default function ProductsClient({ initialProducts = [], district = null, 
     return categoryCounts[categoryName] || 0;
   }, [categoryCounts]);
 
+  const executeScroll = useCallback((targetSlug) => {
+    if (!targetSlug) return false;
+    const targetId = String(targetSlug).trim();
+    const el =
+      document.getElementById(targetId) ||
+      document.getElementById(encodeURIComponent(targetId)) ||
+      document.querySelector(`[data-product-slug="${targetId}"]`);
+
+    if (el) {
+      const headerOffset = 95;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: "smooth",
+      });
+
+      document.querySelectorAll(".product-card-highlighted").forEach((node) => {
+        node.classList.remove("product-card-highlighted");
+      });
+
+      el.classList.add("product-card-highlighted");
+      setTimeout(() => {
+        el.classList.remove("product-card-highlighted");
+      }, 2800);
+      return true;
+    }
+    return false;
+  }, []);
+
   const toggleCategory = useCallback((category) => {
-    setOpenedCategory((prev) => (prev === category ? "" : category));
+    setOpenedCategory((prev) => {
+      const willOpen = prev !== category;
+      if (willOpen) {
+        setActiveCategory(category);
+        const catSlug = category.replace(/\s+/g, "-").toLowerCase();
+        setTimeout(() => {
+          const el = document.getElementById(catSlug);
+          if (el) {
+            const headerOffset = 95;
+            const elementPosition = el.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({
+              top: Math.max(0, offsetPosition),
+              behavior: "smooth",
+            });
+          }
+        }, 60);
+      }
+      return willOpen ? category : "";
+    });
   }, []);
 
   const toggleSubCategory = useCallback((category, subCategory) => {
     const key = `${category}-${subCategory}`;
-    setOpenedSubCategories((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    setOpenedSubCategories((prev) => {
+      const willOpen = !prev[key];
+      if (willOpen) {
+        setTimeout(() => {
+          const el = document.getElementById(key);
+          if (el) {
+            const headerOffset = 95;
+            const elementPosition = el.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({
+              top: Math.max(0, offsetPosition),
+              behavior: "smooth",
+            });
+          }
+        }, 60);
+      }
+      return {
+        ...prev,
+        [key]: willOpen,
+      };
+    });
   }, []);
 
-  const scrollToProduct = useCallback((slug, category) => {
-    setOpenedCategory(category);
-    setActiveCategory(category);
-    setPendingScroll(slug);
-
-    // Auto-expand the target subcategory when scrolling to its product
-    const prod = products.find((p) => p.slug === slug);
-    if (prod && prod.subCategory) {
-      const subKey = `${category}-${prod.subCategory}`;
-      setOpenedSubCategories((prev) => ({
-        ...prev,
-        [subKey]: true,
-      }));
-    }
-  }, [products]);
-
-  // Scroll to selected sidebar item when category expansion finishes
-  useEffect(() => {
-    if (!pendingScroll) return;
-
-    const timer = setTimeout(() => {
-      const el = document.getElementById(pendingScroll);
-      if (el) {
-        el.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+  const scrollToProduct = useCallback(
+    (slug, category) => {
+      if (productSearch) {
+        setSearchInput("");
+        setProductSearch("");
       }
-      setPendingScroll(null);
-    }, 300);
 
-    return () => clearTimeout(timer);
-  }, [openedCategory, pendingScroll]);
+      setOpenedCategory(category);
+      setActiveCategory(category);
+
+      // Auto-expand the target subcategory when scrolling to its product
+      const prod = products.find((p) => p.slug === slug || p.id === slug || p.uid === slug);
+      if (prod && prod.subCategory) {
+        const subKey = `${category}-${prod.subCategory}`;
+        setOpenedSubCategories((prev) => ({
+          ...prev,
+          [subKey]: true,
+        }));
+      }
+
+      // Try scrolling immediately, with resilient fallback
+      requestAnimationFrame(() => {
+        if (!executeScroll(slug)) {
+          setTimeout(() => {
+            if (!executeScroll(slug)) {
+              const targetUrl = district ? `/${district}/items/${slug}` : `/items/${slug}`;
+              router.push(targetUrl);
+            }
+          }, 120);
+        }
+      });
+    },
+    [products, productSearch, executeScroll, district, router]
+  );
 
   // Scroll back to top visibility
   useEffect(() => {
@@ -454,6 +542,7 @@ export default function ProductsClient({ initialProducts = [], district = null, 
                             toggleSubCategory={toggleSubCategory}
                             openedSubCategories={openedSubCategories}
                             scrollToProduct={scrollToProduct}
+                            district={district}
                           />
                         );
                       })}
@@ -555,80 +644,86 @@ export default function ProductsClient({ initialProducts = [], district = null, 
 
                               {/* Product List */}
                               <div className="space-y-8">
-                                {list.slice(0, 12).map((product) => (
-                                  <div
-                                    key={product.uid}
-                                    id={product.slug}
-                                    className="product-list-card text-start"
-                                  >
-                                    <div className="row align-items-center">
-                                      {/* IMAGE */}
-                                      <div className="col-lg-3 col-md-4">
-                                        <div className="list-image">
-                                          <img
-                                            src={product.images?.[0] || product.image || "/placeholder.jpg"}
-                                            alt={product.title}
-                                            onError={(e) => {
-                                              e.currentTarget.src = "/placeholder.jpg";
-                                            }}
-                                          />
+                                {list.map((product) => {
+                                  const targetUrl = district
+                                    ? `/${district}/items/${product.slug}`
+                                    : `/items/${product.slug}`;
+
+                                  return (
+                                    <div
+                                      key={product.uid || product.id || product.slug}
+                                      id={product.slug}
+                                      data-product-slug={product.slug}
+                                      className="product-list-card text-start"
+                                    >
+                                      <div className="row align-items-center">
+                                        {/* IMAGE */}
+                                        <div className="col-lg-3 col-md-4">
+                                          <Link href={targetUrl} className="list-image-link">
+                                            <div className="list-image">
+                                              <img
+                                                src={product.images?.[0] || product.image || "/placeholder.jpg"}
+                                                alt={product.title}
+                                                onError={(e) => {
+                                                  e.currentTarget.src = "/placeholder.jpg";
+                                                }}
+                                              />
+                                            </div>
+                                          </Link>
                                         </div>
-                                      </div>
 
-                                      {/* CONTENT */}
-                                      <div className="col-lg-6 col-md-5">
-                                        <div className="list-content">
-                                          <h4 className="fw-bold">{product.title}</h4>
-                                          <p>
-                                            {product.description ||
-                                              product.desc ||
-                                              "Premium laboratory and diagnostic medical equipment."}
-                                          </p>
+                                        {/* CONTENT */}
+                                        <div className="col-lg-6 col-md-5">
+                                          <div className="list-content">
+                                            <Link href={targetUrl} className="product-title-link">
+                                              <h4 className="fw-bold">{product.title}</h4>
+                                            </Link>
+                                            <p>
+                                              {product.description ||
+                                                product.desc ||
+                                                "Premium laboratory and diagnostic medical equipment."}
+                                            </p>
 
-                                          <div className="spec-grid">
-                                            <div>
-                                              <b>Brand</b>
-                                              <span>{product.brand || "-"}</span>
-                                            </div>
-                                            <div>
-                                              <b>Model</b>
-                                              <span>{product.model || "-"}</span>
-                                            </div>
-                                            {product.instrument && (
+                                            <div className="spec-grid">
                                               <div>
-                                                <b>Instrument</b>
-                                                <span>{product.instrument}</span>
+                                                <b>Brand</b>
+                                                <span>{product.brand || "-"}</span>
                                               </div>
-                                            )}
-                                            {product.usage && (
                                               <div>
-                                                <b>Usage</b>
-                                                <span>{product.usage}</span>
+                                                <b>Model</b>
+                                                <span>{product.model || "-"}</span>
                                               </div>
-                                            )}
+                                              {product.instrument && (
+                                                <div>
+                                                  <b>Instrument</b>
+                                                  <span>{product.instrument}</span>
+                                                </div>
+                                              )}
+                                              {product.usage && (
+                                                <div>
+                                                  <b>Usage</b>
+                                                  <span>{product.usage}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* BUTTON */}
+                                        <div className="col-lg-3 col-md-3 text-center">
+                                          <div className="product-action">
+                                            <Link
+                                              href={targetUrl}
+                                              className="btn-view"
+                                            >
+                                              View Details
+                                            </Link>
                                           </div>
                                         </div>
                                       </div>
-
-                                      {/* BUTTON */}
-                                      <div className="col-lg-3 col-md-3 text-center">
-                                        <div className="product-action">
-                                          <button
-                                            className="btn-view cursor-pointer"
-                                            onClick={() => {
-                                              const targetUrl = district
-                                                ? `/${district}/items/${product.slug}`
-                                                : `/items/${product.slug}`;
-                                              router.push(targetUrl);
-                                            }}
-                                          >
-                                            View Details
-                                          </button>
-                                        </div>
-                                      </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           ))

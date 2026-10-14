@@ -185,32 +185,32 @@ export default function ContactSection({ city }) {
 
   // HELPERS
   const getValue = (key) => {
-    return (
-      contactInfo.find((x) => {
-        const label = x.label?.toLowerCase();
-        return (
-          label?.includes(key) ||
-          (key === "address" && label?.includes("location"))
-        );
-      })?.value || "-"
-    );
+    const found = contactInfo.find((x) => {
+      const label = x.label?.toLowerCase() || "";
+      return (
+        label.includes(key) ||
+        (key === "address" && (label.includes("location") || label.includes("address"))) ||
+        (key === "phone" && (label.includes("phone") || label.includes("mobile") || label.includes("contact")))
+      );
+    });
+
+    if (found && found.value) {
+      if (Array.isArray(found.value)) {
+        return found.value.join(", ");
+      }
+      return String(found.value);
+    }
+
+    // Default fallbacks
+    if (key === "phone") return "+91-9199095737";
+    if (key === "email") return "info@humanbiomedical.in";
+    if (key === "address") return "Unit S-1, 2nd Floor, Pn 16, D Block, Tagore Nagar, Vaishali Nagar, Jaipur - 302021, Rajasthan, India";
+    return "-";
   };
 
-  if (!mounted || loading) {
-    return (
-      <div className="page-loader">
-        <div className="loader-circle"></div>
-        <h2>Human Biomedical</h2>
-        <p>Loading amazing healthcare solutions...</p>
-      </div>
-    );
-  }
-
   const mapAddress = isValidCity
-    ? `${cityName}, ${stateName}, India`
-    : getValue("address") !== "-"
-      ? getValue("address")
-      : "";
+    ? `${cityName}, ${stateName || "Rajasthan"}, India`
+    : getValue("address");
 
   return (
     <>

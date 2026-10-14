@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
+import { saveLeadToMongo } from "@/lib/mongodb";
 import { submitAdminProductQuery } from "@/lib/admin-api";
 import { getCompanyAndWebsiteConfig } from "@/lib/companyConfig";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
 
 export async function POST(request) {
   try {
@@ -57,13 +56,23 @@ export async function POST(request) {
       ...extra,
     };
 
-    const result = await submitAdminProductQuery(payload);
+    // 1. Save directly into MongoDB (queries collection)
+    const mongoResult = await saveLeadToMongo(payload);
+
+    // 2. Forward to SuperAdmin Central API
+    let adminResult = { ok: false };
+    try {
+      adminResult = await submitAdminProductQuery(payload);
+    } catch (e) {
+      console.warn("[product-query] SuperAdmin forwarding error:", e.message);
+    }
 
     return NextResponse.json(
       {
         success: true,
         message: "Product enquiry submitted successfully",
-        adminForwarded: result.ok,
+        mongoSaved: mongoResult.success,
+        adminForwarded: adminResult.ok,
       },
       {
         status: 200,

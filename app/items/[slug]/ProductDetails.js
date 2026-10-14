@@ -14,10 +14,11 @@ import {
     FaLink,
 } from "react-icons/fa";
 
+import Link from "next/link";
 import { fetchProductBySlug } from "@/lib/data-fetcher";
 import "./page.css";
 
-export default function ProductDetails({ slug, product: initialProduct }) {
+export default function ProductDetails({ slug, product: initialProduct, relatedProducts = [] }) {
     const [product, setProduct] = useState(initialProduct || null);
     const [imageLoaded, setImageLoaded] = useState(false);
     const [selectedImage, setSelectedImage] = useState(() => {
@@ -421,12 +422,6 @@ export default function ProductDetails({ slug, product: initialProduct }) {
                                 </video>
                             ) : (
                                 <>
-                                    {!imageLoaded && (
-                                        <div
-                                            className="absolute inset-0 bg-slate-100 animate-pulse"
-                                            style={{ borderRadius: "24px" }}
-                                        />
-                                    )}
                                     <img
                                         src={selectedImage || product.image || "/placeholder.jpg"}
                                         alt={product.title}
@@ -437,8 +432,7 @@ export default function ProductDetails({ slug, product: initialProduct }) {
                                             maxHeight: "550px",
                                             width: "100%",
                                             objectFit: "contain",
-                                            transition: "0.4s ease",
-                                            opacity: imageLoaded ? 1 : 0,
+                                            transition: "0.3s ease",
                                         }}
                                         onError={(e) => {
                                             e.currentTarget.src = "/placeholder.jpg";
@@ -907,6 +901,55 @@ export default function ProductDetails({ slug, product: initialProduct }) {
                         </div>
                     </div>
                 </div>
+
+                {/* RELATED PRODUCTS */}
+                {Array.isArray(relatedProducts) && relatedProducts.length > 0 && (
+                    <div className="mt-5 pt-4 border-top">
+                        <div className="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <span className="badge bg-teal-100 text-teal-800 px-3 py-1 rounded-pill" style={{ backgroundColor: "#e6fffa", color: "#0d9488", fontWeight: "600" }}>
+                                    SIMILAR EQUIPMENT
+                                </span>
+                                <h3 className="fw-bold mt-2 mb-0">Related Products & Solutions</h3>
+                            </div>
+                            <Link href="/items" className="text-decoration-none fw-semibold" style={{ color: "#0f766e" }}>
+                                View All Products →
+                            </Link>
+                        </div>
+                        <div className="row g-4">
+                            {relatedProducts.slice(0, 4).map((rel, rIdx) => (
+                                <div key={rel.slug || rIdx} className="col-lg-3 col-md-6 col-sm-12">
+                                    <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden p-3" style={{ transition: "transform 0.2s ease, box-shadow 0.2s ease" }}>
+                                        <div style={{ height: "180px", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", borderRadius: "12px", padding: "10px" }}>
+                                            <img
+                                                src={rel.images?.[0] || rel.image || "/placeholder.jpg"}
+                                                alt={rel.title}
+                                                style={{ maxHeight: "160px", maxWidth: "100%", objectFit: "contain" }}
+                                                onError={(e) => { e.currentTarget.src = "/placeholder.jpg"; }}
+                                            />
+                                        </div>
+                                        <div className="card-body p-2 d-flex flex-column">
+                                            <span className="badge bg-light text-secondary align-self-start mb-2" style={{ fontSize: "11px" }}>
+                                                {rel.category || "Medical Equipment"}
+                                            </span>
+                                            <h6 className="card-title fw-bold text-truncate" title={rel.title}>
+                                                {rel.title}
+                                            </h6>
+                                            <p className="card-text text-muted small text-truncate" style={{ fontSize: "12px" }}>
+                                                {rel.desc || rel.description || "Certified laboratory analyzer and diagnostic device."}
+                                            </p>
+                                            <div className="mt-auto pt-2">
+                                                <Link href={`/items/${rel.slug}`} className="btn btn-outline-dark btn-sm w-100 rounded-pill fw-semibold">
+                                                    View Details
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

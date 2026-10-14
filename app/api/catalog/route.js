@@ -1,23 +1,45 @@
 import { NextResponse } from "next/server";
+import { getCatalogFromMongo } from "@/lib/mongodb";
 import { fetchAdminCatalog } from "@/lib/admin-api";
 import { getCompanyAndWebsiteConfig } from "@/lib/companyConfig";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
 
 export async function GET(request) {
   try {
     const config = getCompanyAndWebsiteConfig();
-    const catalog = await fetchAdminCatalog({
-      companyId: config.companyId,
-      websiteId: config.normalizedWebsiteId,
-    });
+    const { searchParams } = new URL(request.url);
+    const forceRefresh = searchParams.get("refresh") === "true";
 
-    const products = Array.isArray(catalog) ? catalog : (catalog.products || []);
-    const categories = catalog.categories || [];
-    const categoryProducts = catalog.categoryProducts || [];
-    const normalProducts = catalog.normalProducts || [];
+    let products = [];
+    let categories = [];
+    let categoryProducts = [];
+    let normalProducts = [];
+
+    // 1. Fetch from MongoDB Atlas directly
+    try {
+      const catalog = await getCatalogFromMongo(forceRefresh);
+      if (catalog && catalog.length > 0) {
+        products = catalog;
+        categories = catalog.categories || [];
+        categoryProducts = catalog.categoryProducts || catalog;
+        normalProducts = catalog.normalProducts || catalog;
+      }
+    } catch (dbErr) {
+      console.warn("[/api/catalog] MongoDB fetch failed, falling back to SuperAdmin API:", dbErr.message);
+    }
+
+    // 2. Fallback to SuperAdmin Central API
+    if (products.length === 0) {
+      const fallbackCatalog = await fetchAdminCatalog({
+        companyId: config.companyId,
+        websiteId: config.normalizedWebsiteId,
+      });
+      products = Array.isArray(fallbackCatalog) ? fallbackCatalog : fallbackCatalog.products || [];
+      categories = fallbackCatalog.categories || [];
+      categoryProducts = fallbackCatalog.categoryProducts || products;
+      normalProducts = fallbackCatalog.normalProducts || products;
+    }
 
     return NextResponse.json(
       {
@@ -26,20 +48,16 @@ export async function GET(request) {
         websiteId: config.normalizedWebsiteId,
         count: products.length,
         total: products.length,
-        products: products,
-        categories: categories,
-        categoryProducts: categoryProducts,
-        normalProducts: normalProducts,
+        products,
+        categories,
+        categoryProducts,
+        normalProducts,
         timestamp: Date.now(),
       },
       {
         status: 200,
         headers: {
-          "Cache-Control":
-            "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0",
-          "Surrogate-Control": "no-store",
-          Pragma: "no-cache",
-          Expires: "0",
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
         },
       }
     );
@@ -54,9 +72,6 @@ export async function GET(request) {
       },
       {
         status: 500,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
       }
     );
   }

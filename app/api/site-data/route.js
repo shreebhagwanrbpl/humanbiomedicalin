@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import {
+  getHomeDataFromMongo,
+  getServicesDataFromMongo,
+  getContactDataFromMongo,
+} from "@/lib/mongodb";
+import {
   fetchAdminSiteData,
   fetchAdminDistricts,
   fetchAdminDistrict,
@@ -7,8 +12,6 @@ import {
 import { getCompanyAndWebsiteConfig } from "@/lib/companyConfig";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
 
 export async function GET(request) {
   try {
@@ -23,7 +26,22 @@ export async function GET(request) {
 
     let data = null;
 
-    if (type === "districts") {
+    if (type === "home") {
+      data = await getHomeDataFromMongo();
+      if (!data) {
+        data = await fetchAdminSiteData("home", { companyId, websiteId, district, page });
+      }
+    } else if (type === "services") {
+      data = await getServicesDataFromMongo();
+      if (!data) {
+        data = await fetchAdminSiteData("services", { companyId, websiteId, district, page });
+      }
+    } else if (type === "contact") {
+      data = await getContactDataFromMongo();
+      if (!data) {
+        data = await fetchAdminSiteData("contact", { companyId, websiteId, district, page });
+      }
+    } else if (type === "districts") {
       data = await fetchAdminDistricts({ companyId, websiteId });
     } else if (type === "district" && district) {
       data = await fetchAdminDistrict(district, { companyId, websiteId });
@@ -48,11 +66,7 @@ export async function GET(request) {
       {
         status: 200,
         headers: {
-          "Cache-Control":
-            "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0",
-          "Surrogate-Control": "no-store",
-          Pragma: "no-cache",
-          Expires: "0",
+          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
         },
       }
     );
@@ -66,9 +80,6 @@ export async function GET(request) {
       },
       {
         status: 500,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
       }
     );
   }

@@ -1,178 +1,138 @@
-"use client";
 import Hero from "./components/Hero";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import StatsCounter from "./components/StatsCounter";
 import {
-  fetchFullCatalog,
-  fetchHomeData,
-  fetchServicesData,
-  fetchDistrictData,
-} from "@/lib/data-fetcher";
+  getCatalogFromMongo,
+  getHomeDataFromMongo,
+  getServicesDataFromMongo,
+} from "@/lib/mongodb";
+import { fetchHomeData, fetchServicesData, fetchFullCatalog } from "@/lib/data-fetcher";
 import Link from "next/link";
 import Image from "next/image";
 import "./globals.css";
 
-export default function Home({ city }) {
-  const pathname = usePathname();
-  const pathParts = pathname
-    .split("/")
-    .filter(Boolean);
+export const revalidate = 60; // ISR cache revalidation every 60s for peak speed
 
-  const [currentCity, setCurrentCity] = useState("");
-  const [isValidCity, setIsValidCity] = useState(false);
-  const [cityLoading, setCityLoading] = useState(true);
+export default async function Home({ city: cityProp = "" }) {
+  // 1. Fetch Dynamic Data directly from MongoDB with memory connection pooling
+  let rawHomeData = null;
+  let rawServicesData = null;
+  let catalog = [];
 
-  useEffect(() => {
-    const checkDistrict = async () => {
-      const slug = pathParts[0];
-      if (!slug) {
-        setCurrentCity("");
-        setIsValidCity(false);
-        setCityLoading(false);
-        return;
-      }
+  try {
+    [rawHomeData, rawServicesData, catalog] = await Promise.all([
+      getHomeDataFromMongo().catch(() => null),
+      getServicesDataFromMongo().catch(() => null),
+      getCatalogFromMongo().catch(() => []),
+    ]);
+  } catch (e) {
+    // Fallback to API fetchers
+    [rawHomeData, rawServicesData, catalog] = await Promise.all([
+      fetchHomeData().catch(() => null),
+      fetchServicesData().catch(() => null),
+      fetchFullCatalog().catch(() => []),
+    ]);
+  }
 
-      try {
-        const data = await fetchDistrictData(slug);
-        if (data) {
-          setCurrentCity(slug);
-          setIsValidCity(true);
-        } else {
-          setCurrentCity("");
-          setIsValidCity(false);
-        }
-        setCityLoading(false);
-      } catch {
-        setCurrentCity("");
-        setIsValidCity(false);
-        setCityLoading(false);
-      }
-    };
+  const defaultHomeData = {
+    title: "High-Precision Clinical Laboratory Analyzers & Biomedical Equipment - Human Biomedicals",
+    description:
+      "From advanced clinical chemistry and hematology systems to rapid diagnostic test kits and point-of-care instruments, Human Biomedicals supplies certified, dependable biomedical equipment engineered for clinical precision and continuous lab uptime.",
+    button1Text: "Browse Diagnostic Systems",
+    button2Text: "Inquire for Lab Setup",
+  };
 
-    checkDistrict();
-  }, [pathname]);
+  const data = rawHomeData || defaultHomeData;
 
-  // format city
-  const formatCity = (name = "") =>
-    name
-      .split("-")
-      .map(
-        (w) =>
-          w.charAt(0).toUpperCase() +
-          w.slice(1)
-      )
-      .join(" ");
+  let services = [];
+  if (rawServicesData && Array.isArray(rawServicesData.services)) {
+    services = rawServicesData.services;
+  } else if (Array.isArray(rawServicesData)) {
+    services = rawServicesData;
+  } else {
+    services = [
+      {
+        title: "Scheduled Maintenance, Calibration & Performance Validation",
+        desc: "Proactive maintenance packages, routine calibration standards, and precision validation ensuring strict compliance with clinical quality benchmarks.",
+      },
+      {
+        title: "Comprehensive Lab Instrumentation Setup & Turnkey Solutions",
+        desc: "Complete procurement advisory, equipment installation, site readiness verification, and operational dry-runs for hospital pathology laboratories.",
+      },
+      {
+        title: "Biomedical Instrumentation Deployment & Method Verification",
+        desc: "Expert equipment installation followed by linearity checks, carryover assessments, precision study verification, and seamless integration.",
+      },
+      {
+        title: "Immunoassay, Chemistry & Hematology Reagent Distribution",
+        desc: "High-stability enzymatic reagents, test strips, lyse solutions, and cleaning solutions compatible with major automated analyzers.",
+      },
+      {
+        title: "Rapid-Response Technical Support & On-Site Machine Repairs",
+        desc: "Dedicated field engineering teams equipped with diagnostic tools to troubleshoot hardware anomalies and hydraulic issues.",
+      },
+      {
+        title: "Total Quality Management (TQM) & Continuous QC Verification",
+        desc: "Structured quality management frameworks, daily blank checks, CV% tracking, and regular analyzer audits.",
+      },
+    ];
+  }
 
-  const citySlug = currentCity
-    ?.toLowerCase()
-    ?.replace(/\s+/g, "-");
+  const allProducts = Array.isArray(catalog) ? catalog : catalog.products || [];
+  const featuredProducts = allProducts.slice(0, 8);
 
-  const cityName =
-    formatCity(currentCity);
-  const [mounted, setMounted] = useState(false);
-  const [counts, setCounts] = useState([0, 0, 0, 0]);
-  const [animationData, setAnimationData] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [services, setServices] = useState([]);
-  const [data, setData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const icons = ["🧪", "💊", "⚙️", "🔧", "🌍", "📊"];
 
-  // FIX BLANK PAGE AFTER NAVIGATION
-  useEffect(() => {
-    setMounted(true);
-    window.scrollTo(0, 0);
-  }, [pathname]);
+  const isValidCity = Boolean(cityProp && cityProp.trim().length > 0);
+  const cityName = isValidCity
+    ? cityProp
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    : "";
+  const citySlug = isValidCity
+    ? cityProp.toLowerCase().replace(/\s+/g, "-")
+    : "";
 
   const makeLink = (path = "") => {
     if (!citySlug) return path || "/";
     return `/${citySlug}${path}`;
   };
 
-  // COUNTER
-  useEffect(() => {
-    const target = [500, 200, 15, 24];
-    const interval = setInterval(() => {
-      setCounts((prev) =>
-        prev.map((val, i) =>
-          val < target[i]
-            ? val + Math.ceil(target[i] / 40)
-            : target[i]
-        )
-      );
-    }, 50);
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Human Biomedical",
+    url: "https://humanbiomedical.in",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://humanbiomedical.in/items?search={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
 
-    setTimeout(() => clearInterval(interval), 2000);
-    return () => clearInterval(interval);
-  }, [pathname]);
+  const productListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Featured Biomedical Equipment and Test Strips",
+    itemListElement: featuredProducts.map((p, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: p.title || p.name,
+      url: `https://humanbiomedical.in/items/${p.slug || p.id}`,
+    })),
+  };
 
-  // FETCH PRODUCTS FROM MASTER CATALOG
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const catalog = await fetchFullCatalog(true);
-        const productList = Array.isArray(catalog) ? [...catalog] : [...(catalog.products || [])];
-        // Display random 4 products from visible master catalog
-        productList.sort(() => Math.random() - 0.5);
-        setProducts(productList.slice(0, 4));
-      } catch (err) {
-        console.error("[Home] Error fetching master products:", err);
-      }
-    };
-
-    fetchProducts();
-  }, [pathname]);
-
-  const icons = ["🧪", "💊", "⚙️", "🔧", "🌍", "📊"];
-
-  // SERVICES
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        const sData = await fetchServicesData();
-        if (sData && Array.isArray(sData.services)) {
-          setServices(sData.services);
-        } else if (Array.isArray(sData)) {
-          setServices(sData);
-        }
-      } catch (err) {
-        console.error("[Home] Error fetching services data:", err);
-      }
-    };
-
-    loadServices();
-  }, [pathname]);
-
-  // HOME DATA
-  useEffect(() => {
-    const loadHomeData = async () => {
-      try {
-        const hData = await fetchHomeData();
-        if (hData) {
-          setData(hData);
-        }
-      } catch (err) {
-        console.error("[Home] Error fetching home data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadHomeData();
-  }, [pathname]);
-  if (loading || cityLoading) {
-    return (
-      <div className="page-loader">
-        <div className="loader-circle"></div>
-
-        <h2>Human Biomedical</h2>
-
-        <p>Loading amazing healthcare solutions...</p>
-      </div>
-    );
-  }
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productListSchema) }}
+      />
 
+      {/* HERO SECTION */}
       <Hero
         data={data}
         isValidCity={isValidCity}
@@ -180,176 +140,120 @@ export default function Home({ city }) {
         citySlug={citySlug}
       />
 
-      {/*  STATS SECTION */}
-      <section className="stats-section text-center">
+      {/* STATS SECTION (Animated Counter Client Component) */}
+      <StatsCounter />
 
-        <div className="container">
-
-          <div className="row">
-
-            <div className="col-md-3 mb-4 stat-anim">
-              <div className="stat-box">
-                <h2>{counts[0]}+</h2>
-                <p>Products</p>
-              </div>
-            </div>
-
-            <div className="col-md-3 mb-4 stat-anim">
-              <div className="stat-box">
-                <h2>{counts[1]}+</h2>
-                <p>Clients</p>
-              </div>
-            </div>
-
-            <div className="col-md-3 mb-4 stat-anim">
-              <div className="stat-box">
-                <h2>{counts[2]}+</h2>
-                <p>Years Experience</p>
-              </div>
-            </div>
-
-            <div className="col-md-3 mb-4 stat-anim">
-              <div className="stat-box">
-                <h2>24/7</h2>
-                <p>Support</p>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/*  SERVICES CARDS */}
+      {/* SERVICES SECTION */}
       <section className="services-section">
-
         <div className="container">
-
           <div className="row g-4">
-
             <div className="section-title text-center">
               <h1>Our Services</h1>
-
               <p className="section-subtitle">
                 Reliable Healthcare & Diagnostic Solutions
+                {isValidCity ? ` in ${cityName}` : ""}
               </p>
             </div>
 
             {services.map((item, i) => (
-
               <div className="col-md-4" key={i}>
-
                 <div className="service-card">
-
-                  <div className="icon">
-                    {icons[i] || "⚙️"}
-                  </div>
-
+                  <div className="icon">{icons[i % icons.length] || "⚙️"}</div>
                   <h5>{item.title}</h5>
-
                   <p>{item.desc}</p>
-
                 </div>
-
               </div>
-
             ))}
-
           </div>
-
         </div>
-
       </section>
 
-      {/* FEATURED PRODUCTS */}
+      {/* FEATURED PRODUCTS SECTION */}
       <section className="products-section fade-up py-5">
         <div className="container">
           <div className="text-center mb-5">
-            <span className="products-badge">
-              OUR PRODUCTS
-            </span>
+            <span className="products-badge">OUR PRODUCTS</span>
             <h2 className="section-title mb-2">
-              Featured Products & Solutions
+              Featured Products & Diagnostic Solutions
             </h2>
             <p className="text-muted mx-auto" style={{ maxWidth: "600px", fontSize: "15px" }}>
-              Explore high-performance biomedical instruments, analyzers and medical devices engineered for laboratories & hospitals.
+              Explore certified laboratory equipment, diagnostic analyzers, test strips, and hospital devices engineered for maximum clinical precision.
             </p>
           </div>
 
           <div className="row g-4">
-            {products.map((item, i) => (
-              <div
-                className="col-lg-3 col-md-6 col-sm-12"
-                key={item.uid || item.slug || i}
-              >
-                <div className="product-card h-100 d-flex flex-column">
-                  {/* IMAGE WRAPPER */}
-                  <div className="product-img-wrapper">
-                    <span className="product-category-badge">
-                      {item.category || "Biomedical"}
-                    </span>
-                    <img
-                      src={
-                        item.images?.[0] ||
-                        item.image ||
-                        item.images?.[0]?.url ||
-                        "/placeholder.jpg"
-                      }
-                      className="product-img"
-                      alt={item.title}
-                      onError={(e) => {
-                        e.currentTarget.src = "/placeholder.jpg";
-                      }}
-                    />
-                  </div>
+            {featuredProducts.map((item, i) => {
+              const displayImage =
+                item.images?.[0] || item.image || "/placeholder.jpg";
+              const productUrl = makeLink(`/items/${item.slug || item.id}`);
 
-                  {/* CONTENT */}
-                  <div className="product-content d-flex flex-column flex-grow-1">
-                    <div>
-                      {item.brand && (
-                        <span className="product-brand-tag">
-                          {item.brand}
-                        </span>
-                      )}
-                      <h5 className="product-title" title={item.title}>
-                        {item.title}
-                      </h5>
-                      <p className="product-desc">
-                        {item.desc ||
-                          item.description ||
-                          "Premium laboratory and diagnostic medical equipment."}
-                      </p>
+              return (
+                <div
+                  className="col-lg-3 col-md-6 col-sm-12"
+                  key={item.uid || item.slug || item.id || i}
+                >
+                  <div className="product-card h-100 d-flex flex-column">
+                    <div className="product-img-wrapper">
+                      <span className="product-category-badge">
+                        {item.category || "Medical Equipment"}
+                      </span>
+                      <Image
+                        src={displayImage}
+                        className="product-img"
+                        alt={item.title || "Product Image"}
+                        width={300}
+                        height={260}
+                        style={{ objectFit: "contain" }}
+                        priority={i < 4}
+                        loading={i < 4 ? "eager" : "lazy"}
+                      />
                     </div>
 
-                    {/* ACTION BUTTON AT BOTTOM */}
-                    <div className="product-footer mt-auto pt-2">
-                      <Link
-                        href={makeLink(item.slug ? `/items/${item.slug}` : "/items")}
-                        className="w-100 text-decoration-none"
-                      >
-                        <button className="btn product-btn w-100 d-flex align-items-center justify-content-center gap-2">
-                          <span>View Details</span>
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                          </svg>
-                        </button>
-                      </Link>
+                    <div className="product-content d-flex flex-column flex-grow-1">
+                      <div>
+                        {item.brand && (
+                          <span className="product-brand-tag">
+                            {item.brand}
+                          </span>
+                        )}
+                        <h5 className="product-title" title={item.title}>
+                          {item.title}
+                        </h5>
+                        <p className="product-desc">
+                          {item.desc ||
+                            item.description ||
+                            "Premium laboratory and diagnostic medical equipment."}
+                        </p>
+                      </div>
+
+                      <div className="product-footer mt-auto pt-2">
+                        <Link
+                          href={productUrl}
+                          className="w-100 text-decoration-none"
+                        >
+                          <button className="btn product-btn w-100 d-flex align-items-center justify-content-center gap-2">
+                            <span>View Details</span>
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                              <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                          </button>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="text-center mt-5">
@@ -357,194 +261,131 @@ export default function Home({ city }) {
               <button
                 className="btn px-4 py-2.5 rounded-pill font-semibold"
                 style={{
-                  border: "2px solid #d62828",
-                  color: "#d62828",
+                  border: "2px solid #0f766e",
+                  color: "#0f766e",
                   fontWeight: "700",
                   fontSize: "14px",
                   background: "transparent",
                   transition: "all 0.3s ease",
-                  cursor: "pointer"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#d62828";
-                  e.currentTarget.style.color = "#ffffff";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "#d62828";
+                  cursor: "pointer",
                 }}
               >
-                Explore Full Product Catalog →
+                Explore Full Product Catalog ({allProducts.length} Items) →
               </button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/*  ABOUT SECTION */}
-      <section className="py-5 text-white">
-
+      {/* ABOUT US SECTION */}
+      <section className="py-5 text-white bg-light">
         <div className="container">
-
           <div className="row align-items-center">
-
             <div className="col-md-6 mb-4 mb-md-0">
-
-              <img
+              <Image
                 src="/about.png"
                 className="img-fluid rounded shadow"
-                alt="About"
+                alt="About Human Biomedical"
+                width={600}
+                height={400}
+                style={{ objectFit: "cover" }}
               />
-
             </div>
 
-            {/* RIGHT CONTENT */}
             <div className="col-md-6">
-
-              <h6 className="text-secondary text-uppercase">
-                About Us
+              <h6 className="text-secondary text-uppercase fw-bold">
+                About Human Biomedical
               </h6>
-
-              <h2 className="fw-bold mb-3 text-black">
-                Trusted Partner in Medical Equipment
+              <h2 className="fw-bold mb-3 text-dark">
+                Trusted Partner in Clinical Diagnostics & Medical Equipment
               </h2>
-
               <p className="text-secondary">
-                We provide high-quality diagnostic machines and medical
-                solutions designed for accuracy, performance, and reliability.
-                Our mission is to empower healthcare professionals with the
-                best tools.
+                Human Biomedical is a reputable medical technology provider delivering state-of-the-art laboratory analyzers, diagnostic consumables, and equipment for clinical laboratories, research centers, and hospitals.
               </p>
-
               <p className="text-secondary">
-                With years of experience and a strong client base, we ensure
-                top-notch service, support, and innovative solutions tailored
-                to your needs.
+                With a nationwide network, comprehensive warranty support, and prompt on-site engineering services, we empower healthcare specialists to achieve diagnostic accuracy with zero downtime.
               </p>
 
               <div className="mt-4 d-flex gap-3">
                 <Link href={makeLink("/about")}>
-                  <button className="btn btn-light px-4">
-                    Know More
+                  <button className="btn btn-dark px-4 py-2">
+                    Know More About Us
                   </button>
                 </Link>
-                {/* <button className="btn btn-outline-light px-4">
-                  Contact Us
-                </button> */}
-
+                <Link href={makeLink("/contact")}>
+                  <button className="btn btn-outline-dark px-4 py-2">
+                    Get in Touch
+                  </button>
+                </Link>
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
-      {/*  CTA SECTION */}
+      {/* CALL TO ACTION */}
       <section className="cta-section text-center">
-
         <div className="container">
-
           <h2 className="cta-title mb-3">
-            Need Medical Equipment for Your Lab?
+            Looking for Medical Equipment or Diagnostics Setup?
           </h2>
-
           <p className="cta-desc mb-4">
-            Get the best pricing, quality products, and expert support.
-            Let’s help you grow your healthcare business.
+            Get best direct distributor pricing, manufacturer warranty, and turnkey installation support for your clinical laboratory or hospital.
           </p>
-
           <div className="d-flex justify-content-center gap-3 flex-wrap">
-
-            {/* <button className="btn cta-btn">
-              Get Quote
-            </button> */}
             <Link href={makeLink("/contact")}>
-              <button className="btn cta-btn-outline">
-                Contact Us
-              </button>
+              <button className="btn cta-btn">Request Quotation</button>
+            </Link>
+            <Link href={makeLink("/items")}>
+              <button className="btn cta-btn-outline">Browse Catalog</button>
             </Link>
           </div>
-
         </div>
-
       </section>
 
-      {/*  TESTIMONIALS SECTION */}
+      {/* TESTIMONIALS */}
       <section className="testimonial-section">
-
         <div className="container text-center">
-
-          <h6 className="section-subtitle">
-            Testimonials
-          </h6>
-
-          <h2 className="section-title mb-5">
-            What Our Clients Say
-          </h2>
-
+          <h6 className="section-subtitle">Client Reviews</h6>
+          <h2 className="section-title mb-5">Trusted by Pathologists & Clinicians</h2>
           <div className="row">
-
             <div className="col-md-4 mb-4">
-
               <div className="testimonial-card h-100">
-
                 <p>
-                  "Amazing quality equipment and fast delivery.
-                  Their support team is very helpful and professional."
+                  "Outstanding quality equipment and prompt installation. The diagnostic test strips and analyzer accuracy are exceptional."
                 </p>
-
                 <div className="mt-3">
-                  <h6>Dr. Sharma</h6>
-                  <small>Pathologist</small>
+                  <h6 className="fw-bold">Dr. Sharma</h6>
+                  <small className="text-muted">Senior Pathologist, Diagnostic Lab</small>
                 </div>
-
               </div>
-
             </div>
 
             <div className="col-md-4 mb-4">
-
               <div className="testimonial-card h-100">
-
                 <p>
-                  "We upgraded our lab with their machines and saw
-                  immediate improvement in efficiency."
+                  "We upgraded our hospital lab machinery through Human Biomedical. Seamless deployment, great training, and zero breakdowns."
                 </p>
-
                 <div className="mt-3">
-                  <h6>Dr. Mehta</h6>
-                  <small>Lab Owner</small>
+                  <h6 className="fw-bold">Dr. Mehta</h6>
+                  <small className="text-muted">Hospital Laboratory Director</small>
                 </div>
-
               </div>
-
             </div>
 
             <div className="col-md-4 mb-4">
-
               <div className="testimonial-card h-100">
-
                 <p>
-                  "Reliable products and great pricing.
-                  Highly recommended for medical professionals."
+                  "Genuine products, competitive quotes, and immediate customer care. Highly recommended for any medical institution."
                 </p>
-
                 <div className="mt-3">
-                  <h6>Dr. Verma</h6>
-                  <small>Clinic Owner</small>
+                  <h6 className="fw-bold">Dr. Verma</h6>
+                  <small className="text-muted">Clinical Laboratory Owner</small>
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
     </div>
   );
